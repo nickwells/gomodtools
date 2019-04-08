@@ -25,9 +25,11 @@ import (
 // Created: Thu Mar 28 12:13:29 2019
 
 const (
-	ColLevel    = "level"
-	ColName     = "name"
-	ColUseCount = "use-count"
+	ColLevel        = "level"
+	ColName         = "name"
+	ColUseCount     = "use-count"
+	ColUsesCountInt = "uses-count-int"
+	ColUsesCountExt = "uses-count-ext"
 )
 
 var columnsToShow = map[string]bool{
@@ -43,11 +45,13 @@ var sortBy = ColLevel
 
 // ModInfo records information gleaned from the go.mod files
 type ModInfo struct {
-	Loc    *location.L
-	Name   string
-	Reqs   []*ModInfo
-	Level  int
-	ReqdBy []*ModInfo
+	Loc              *location.L
+	Name             string
+	Reqs             []*ModInfo
+	ReqCountInternal int
+	ReqCountExternal int
+	Level            int
+	ReqdBy           []*ModInfo
 }
 
 var modules = map[string]*ModInfo{}
@@ -57,6 +61,10 @@ var helpTxt = "The level value indicates that the module requires modules" +
 	" a higher level.\n\n" +
 	"The use count indicates how many other modules require this" +
 	" module.\n\n" +
+	"The uses count (internal) indicates how many other modules from" +
+	" this collection this module requires.\n\n" +
+	"The uses count (external) indicates how many modules from outside" +
+	" this collection this module requires.\n\n" +
 	"This allows you to make judgements about changes you are making." +
 	" For instance, if you are changing a module at level 3," +
 	" you might have to make changes to other modules with" +
@@ -84,6 +92,7 @@ func main() {
 
 	parseAllGoModFiles(ps.Remainder())
 	calcLevels()
+	calcReqCount()
 	reportModuleInfo()
 }
 
@@ -245,6 +254,24 @@ func calcLevels() {
 	}
 }
 
+// calcReqCount will calculate the number of internal and external
+// requirements for each module. If a required module has no location set
+// then it is taken to be an external requireement.
+func calcReqCount() {
+	for _, mi := range modules {
+		mi.ReqCountInternal = 0
+		mi.ReqCountExternal = 0
+
+		for _, rmi := range mi.Reqs {
+			if rmi.Loc == nil {
+				mi.ReqCountExternal++
+			} else {
+				mi.ReqCountInternal++
+			}
+		}
+	}
+}
+
 // findMaxNameLen returns the length of the longest module name
 func findMaxNameLen() int {
 	max := 0
@@ -256,7 +283,59 @@ func findMaxNameLen() int {
 	return max
 }
 
-// makeModInfoSlice returns the modules map as aslice of ModInfo pointers
+// lessByLevel returns true or false according to the levels of the ModInfo
+// entries. It will use the module name to resolve ties.
+func lessByLevel(ms []*ModInfo, i, j int) bool {
+	if ms[i].Level < ms[j].Level {
+		return true
+	}
+	if ms[i].Level > ms[j].Level {
+		return false
+	}
+	return ms[i].Name < ms[j].Name
+}
+
+// lessByUseCount returns true or false according to the UseCounts of the
+// ModInfo entries. It will use the module name to resolve ties.
+func lessByUseCount(ms []*ModInfo, i, j int) bool {
+	if len(ms[i].ReqdBy) < len(ms[j].ReqdBy) {
+		return true
+	}
+	if len(ms[i].ReqdBy) > len(ms[j].ReqdBy) {
+		return false
+	}
+	return ms[i].Name < ms[j].Name
+}
+
+// lessByReqCountInt returns true or false according to the internal
+// requirement count of the ModInfo entries. It will use the module name to
+// resolve ties.
+func lessByReqCountInt(ms []*ModInfo, i, j int) bool {
+	if ms[i].ReqCountInternal < ms[j].ReqCountInternal {
+		return true
+	}
+	if ms[i].ReqCountInternal > ms[j].ReqCountInternal {
+		return false
+	}
+	return ms[i].Name < ms[j].Name
+}
+
+// lessByReqCountExt returns true or false according to the external
+// requirement count of the ModInfo entries. It will use the module name to
+// resolve ties.
+func lessByReqCountExt(ms []*ModInfo, i, j int) bool {
+	if ms[i].ReqCountExternal < ms[j].ReqCountExternal {
+		return true
+	}
+	if ms[i].ReqCountExternal > ms[j].ReqCountExternal {
+		return false
+	}
+	return ms[i].Name < ms[j].Name
+}
+
+// makeModInfoSlice returns the modules map as a slice of ModInfo
+// pointers. The slice will be sorted according to the value of the sort
+// parameter
 func makeModInfoSlice() []*ModInfo {
 	ms := make([]*ModInfo, 0, len(modules))
 	for _, mi := range modules {
@@ -264,14 +343,15 @@ func makeModInfoSlice() []*ModInfo {
 	}
 
 	if sortBy == ColLevel {
-		sort.Slice(ms, func(i, j int) bool { return ms[i].Level < ms[j].Level })
+		sort.Slice(ms, func(i, j int) bool { return lessByLevel(ms, i, j) })
 	} else if sortBy == ColName {
 		sort.Slice(ms, func(i, j int) bool { return ms[i].Name < ms[j].Name })
 	} else if sortBy == ColUseCount {
-		sort.Slice(ms,
-			func(i, j int) bool {
-				return len(ms[i].ReqdBy) < len(ms[j].ReqdBy)
-			})
+		sort.Slice(ms, func(i, j int) bool { return lessByUseCount(ms, i, j) })
+	} else if sortBy == ColUsesCountInt {
+		sort.Slice(ms, func(i, j int) bool { return lessByReqCountInt(ms, i, j) })
+	} else if sortBy == ColUsesCountExt {
+		sort.Slice(ms, func(i, j int) bool { return lessByReqCountExt(ms, i, j) })
 	}
 	return ms
 }
@@ -310,12 +390,18 @@ func makeReport(h *col.Header) (*col.Report, error) {
 	cols := make([]*col.Col, 0, len(columnsToShow))
 
 	if columnsToShow[ColLevel] {
-		cols = append(cols, col.New(colfmt.Int{W: 2}, "Level"))
+		cols = append(cols, col.New(colfmt.Int{W: 3}, "Level"))
 	}
 	cols = append(cols,
 		col.New(colfmt.String{W: findMaxNameLen()}, "Module name"))
 	if columnsToShow[ColUseCount] {
-		cols = append(cols, col.New(colfmt.Int{W: 2}, "Use", "Count"))
+		cols = append(cols, col.New(colfmt.Int{W: 3}, "Count", "Used By"))
+	}
+	if columnsToShow[ColUsesCountInt] {
+		cols = append(cols, col.New(colfmt.Int{W: 3}, "Count", "Uses (int)"))
+	}
+	if columnsToShow[ColUsesCountExt] {
+		cols = append(cols, col.New(colfmt.Int{W: 3}, "Count", "Uses (ext)"))
 	}
 	return col.NewReport(h, os.Stdout, cols...)
 }
@@ -329,11 +415,29 @@ func addLevelCol(mi *ModInfo, colVals []interface{}) []interface{} {
 	return colVals
 }
 
-// addUseCountCol adds the level column value to the colVals and returns the new
-// colVals
+// addUseCountCol adds the use count column value to the colVals and returns
+// the new colVals
 func addUseCountCol(mi *ModInfo, colVals []interface{}) []interface{} {
 	if columnsToShow[ColUseCount] {
 		colVals = append(colVals, len(mi.ReqdBy))
+	}
+	return colVals
+}
+
+// addUsesCountIntCol adds the uses count (internal) column value to the
+// colVals and returns the new colVals
+func addUsesCountIntCol(mi *ModInfo, colVals []interface{}) []interface{} {
+	if columnsToShow[ColUsesCountInt] {
+		colVals = append(colVals, mi.ReqCountInternal)
+	}
+	return colVals
+}
+
+// addUsesCountExtCol adds the uses count (external) column value to the
+// colVals and returns the new colVals
+func addUsesCountExtCol(mi *ModInfo, colVals []interface{}) []interface{} {
+	if columnsToShow[ColUsesCountExt] {
+		colVals = append(colVals, mi.ReqCountExternal)
 	}
 	return colVals
 }
@@ -353,15 +457,24 @@ func reportModuleInfo() {
 
 	lastLevel := -1
 	for _, mi := range makeModInfoSlice() {
+		if mi.Loc == nil {
+			continue
+		}
 		colVals := make([]interface{}, 0, len(columnsToShow))
 		if lastLevel == mi.Level && hideDupLevels && columnsToShow[ColLevel] {
 			colVals = append(colVals, mi.Name)
 			colVals = addUseCountCol(mi, colVals)
+			colVals = addUsesCountIntCol(mi, colVals)
+			colVals = addUsesCountExtCol(mi, colVals)
+
 			err = rpt.PrintRowSkipCols(1, colVals...)
 		} else {
 			colVals = addLevelCol(mi, colVals)
 			colVals = append(colVals, mi.Name)
 			colVals = addUseCountCol(mi, colVals)
+			colVals = addUsesCountIntCol(mi, colVals)
+			colVals = addUsesCountExtCol(mi, colVals)
+
 			err = rpt.PrintRow(colVals...)
 		}
 		if err != nil {
@@ -393,8 +506,13 @@ func addParams(ps *param.PSet) error {
 				ColLevel:    "in level order (lowest first)",
 				ColName:     "in name order",
 				ColUseCount: "in order of how heavily used the module is",
+				ColUsesCountInt: "in order of how much use the module makes" +
+					" of other modules in the collection",
+				ColUsesCountExt: "in order of how much use the module makes" +
+					" of modules not in the collection",
 			}},
 		"what order should the modules be sorted when reporting",
+		param.AltName("sort-by"),
 	)
 
 	ps.Add("show-cols",
@@ -403,6 +521,10 @@ func addParams(ps *param.PSet) error {
 			AllowedVals: psetter.AValMap{
 				ColLevel:    "where the module lies in the dependency order",
 				ColUseCount: "how heavily used the module is",
+				ColUsesCountInt: "how much use the module makes" +
+					" of other modules in the collection",
+				ColUsesCountExt: "how much use the module makes" +
+					" of modules not in the collection",
 			},
 			AllowHiddenMapEntries: true,
 		},
