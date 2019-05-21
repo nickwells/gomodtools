@@ -15,6 +15,7 @@ import (
 	"github.com/nickwells/filecheck.mod/filecheck"
 	"github.com/nickwells/location.mod/location"
 	"github.com/nickwells/param.mod/v3/param"
+	"github.com/nickwells/param.mod/v3/param/paction"
 	"github.com/nickwells/param.mod/v3/param/paramset"
 	"github.com/nickwells/param.mod/v3/param/psetter"
 	"github.com/nickwells/twrap.mod/twrap"
@@ -527,6 +528,20 @@ func addParams(ps *param.PSet) error {
 			AllowHiddenMapEntries: true,
 		},
 		"what columns should be shown",
+	)
+
+	ps.Add("names-by-level", psetter.Nil{},
+		"just show the module names in level order",
+		param.PostAction(paction.SetBool(&showHeader, false)),
+		param.PostAction(paction.SetBool(&showIntro, false)),
+		param.PostAction(paction.SetString(&sortBy, ColLevel)),
+		param.PostAction(func(_ location.L, _ *param.ByName, _ []string) error {
+			columnsToShow = map[string]bool{
+				ColName: true,
+			}
+			return nil
+		}),
+		//param.Attrs(param.CommandLineOnly|param.MustBeSet|param.SetOnlyOnce|param.DontShowInStdUsage),
 	)
 
 	err := ps.SetRemHandler(param.NullRemHandler{}) // allow trailing arguments
