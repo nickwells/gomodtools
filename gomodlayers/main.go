@@ -5,7 +5,6 @@ import (
 	"bufio"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -76,14 +75,11 @@ var helpTxt = "The level value indicates that the module requires modules" +
 	" then many other modules will be impacted."
 
 func main() {
-	ps, err := paramset.New(addParams,
+	ps := paramset.NewOrDie(addParams,
 		param.SetProgramDescription("This will parse the provided"+
 			" go.mod files and will print a report of where they sit"+
 			" in relation to one another.\n\n"+helpTxt),
 	)
-	if err != nil {
-		log.Fatal("Couldn't construct the parameter set: ", err)
-	}
 	ps.AddConfigFile(
 		filepath.Join(xdg.ConfigHome(), "golem", "gomodtools.cfg"),
 		filecheck.Optional)
