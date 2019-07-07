@@ -1,6 +1,10 @@
 # gomodtools
 This contains various tools for working with go modules (currently just one
-tool)
+tool).
+
+All these tools use a standard param package to handle command-line flags
+and so they support the standard '-help' parameter which will print out a
+comprehensive usage message.
 
 ## gomodlayers
 This command will take a set of go.mod files and report the dependencies

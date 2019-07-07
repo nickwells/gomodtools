@@ -6,20 +6,17 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path/filepath"
 	"regexp"
 	"sort"
 
 	"github.com/nickwells/col.mod/v2/col"
 	"github.com/nickwells/col.mod/v2/col/colfmt"
-	"github.com/nickwells/filecheck.mod/filecheck"
 	"github.com/nickwells/location.mod/location"
 	"github.com/nickwells/param.mod/v3/param"
 	"github.com/nickwells/param.mod/v3/param/paction"
 	"github.com/nickwells/param.mod/v3/param/paramset"
 	"github.com/nickwells/param.mod/v3/param/psetter"
 	"github.com/nickwells/twrap.mod/twrap"
-	"github.com/nickwells/xdg.mod/xdg"
 )
 
 // Created: Thu Mar 28 12:13:29 2019
@@ -77,13 +74,12 @@ var helpTxt = "The level value indicates that the module requires modules" +
 
 func main() {
 	ps := paramset.NewOrDie(addParams,
+		SetGlobalConfigFile,
+		SetConfigFile,
 		param.SetProgramDescription("This will parse the provided"+
 			" go.mod files and will print a report of where they sit"+
 			" in relation to one another.\n\n"+helpTxt),
 	)
-	ps.AddConfigFile(
-		filepath.Join(xdg.ConfigHome(), "golem", "gomodtools.cfg"),
-		filecheck.Optional)
 
 	ps.Parse()
 
