@@ -10,8 +10,8 @@ github.com/nickwells/location.mod v1.2.4 h1:K+/uKwJ2nmHZlzLZ7YMP2xK0YeMq9pv0Nsr6
 github.com/nickwells/location.mod v1.2.4/go.mod h1:KGNiSWoqeCEW1uV2ZKlz+yCoji86qvh189PTdiPC5js=
 github.com/nickwells/mathutil.mod v1.0.6 h1:ZzzamM+h5AF2lSQhfSfFftPtMtj3rte2Zu3F/2wj18A=
 github.com/nickwells/mathutil.mod v1.0.6/go.mod h1:VJFj64pzuQxBrMtE0t0oTnTqKik1xE4Fa2Ar8oao3lA=
-github.com/nickwells/param.mod/v3 v3.1.2 h1:03DoRZLer6l+AR73tqEG3OGX4S6yvc/qH6iidTMZcy0=
-github.com/nickwells/param.mod/v3 v3.1.2/go.mod h1:EWysoPi4LHJ2vmAdXdB/Wn+0w8dSfN9IIN474h2h3o8=
+github.com/nickwells/param.mod/v3 v3.1.3 h1:YT1RJqS8LttVPboTGxT6ywe2M6NI4DswxlRkUTIVUeI=
+github.com/nickwells/param.mod/v3 v3.1.3/go.mod h1:EWysoPi4LHJ2vmAdXdB/Wn+0w8dSfN9IIN474h2h3o8=
 github.com/nickwells/strdist.mod v1.0.8 h1:5RIbqfujP7d8iAfM8efgUUv5tttv7M6QXHNdrXAPcPQ=
 github.com/nickwells/strdist.mod v1.0.8/go.mod h1:QMdIyES+qWbh/ocPAJ+mUjynBTHfnP4iMat6n9vjhik=
 github.com/nickwells/testhelper.mod v1.3.6 h1:O2J4tJ5Nmj8B00MdTkhh7ejCMJndUjgOaIeNEJlJsOs=
