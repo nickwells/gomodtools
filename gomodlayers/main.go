@@ -482,14 +482,23 @@ func reportModuleInfo() {
 func addParams(ps *param.PSet) error {
 	ps.Add("hide-header", psetter.Bool{Value: &showHeader, Invert: true},
 		"suppress the printing of the header",
-	)
-	ps.Add("hide-dup-levels", psetter.Bool{Value: &hideDupLevels},
-		"suppress the printing of levels where the lavel value"+
-			" is the same as on the previous line",
+		param.AltName("hide-hdr"),
+		param.AltName("no-hdr"),
 	)
 	ps.Add("hide-intro", psetter.Bool{Value: &showIntro, Invert: true},
 		"suppress the printing of the introductory text"+
 			" explaining the meaning of the report",
+		param.AltName("no-intro"),
+	)
+	ps.Add("brief", psetter.Nil{},
+		"suppress the printing of both the introductory text and the headers",
+		param.PostAction(paction.SetBool(&showHeader, false)),
+		param.PostAction(paction.SetBool(&showIntro, false)),
+	)
+
+	ps.Add("hide-dup-levels", psetter.Bool{Value: &hideDupLevels},
+		"suppress the printing of levels where the level value"+
+			" is the same as on the previous line",
 	)
 
 	ps.Add("sort-order",
@@ -523,7 +532,7 @@ func addParams(ps *param.PSet) error {
 				}},
 			AllowHiddenMapEntries: true,
 		},
-		"what columns should be shown",
+		"what columns should be shown (note that the name is always shown)",
 	)
 
 	ps.Add("names-by-level", psetter.Nil{},
@@ -537,10 +546,10 @@ func addParams(ps *param.PSet) error {
 			}
 			return nil
 		}),
-		//param.Attrs(param.CommandLineOnly|param.MustBeSet|param.SetOnlyOnce|param.DontShowInStdUsage),
 	)
 
-	err := ps.SetRemHandler(param.NullRemHandler{}) // allow trailing arguments
+	// allow trailing arguments
+	err := ps.SetNamedRemHandler(param.NullRemHandler{}, "go.mod-files")
 	if err != nil {
 		return err
 	}
