@@ -10,13 +10,13 @@ github.com/nickwells/location.mod v1.2.5 h1:1vI2z1uPi5Ciyhdr5+5d8wvfN3TLrehrEyG4
 github.com/nickwells/location.mod v1.2.5/go.mod h1:XrX0tLOVtpKChCbXbgN50ONEUBV6FqG7rNdrXMnf3kM=
 github.com/nickwells/mathutil.mod v1.0.7 h1:YW3Vn6uqejOx0osF7Pz9m+8D02U9hAhqGUFhu4W5Qbs=
 github.com/nickwells/mathutil.mod v1.0.7/go.mod h1:t56fow8a/DB4Lkx0kkXrvlHJhDgH7f4zYsgB8P8u48Q=
-github.com/nickwells/param.mod/v3 v3.4.0 h1:O+n40lswjMZklOpzqvRoovxssWqup1PBL5WiJ9WHpzQ=
-github.com/nickwells/param.mod/v3 v3.4.0/go.mod h1:myEtbaf/JcIW2iSO3JvosAWD8T9HpOlr1HT6H5rdVT8=
+github.com/nickwells/param.mod/v3 v3.4.1 h1:GZc84VJ1UYHx2avPfYUoRPp21HTs0X8+JJoaDzVTuVw=
+github.com/nickwells/param.mod/v3 v3.4.1/go.mod h1:1i6C/99RnMpUEbSEI8sOEBZpzyrpehRSwcxVdMu7GFM=
 github.com/nickwells/strdist.mod v1.0.10 h1:mzZcl/hSCOSZ3N5/pGyRZ/rrBUvb9164osucA3X8Lgs=
 github.com/nickwells/strdist.mod v1.0.10/go.mod h1:AFgwKOF2GcWbNkO+XERn2WqmtjSViB1Lz+1ZWWzH7NQ=
 github.com/nickwells/testhelper.mod v1.3.7 h1:JZ5ut/AcF0F44HULeHKxzccq2eZizmfANamEVqjfax4=
 github.com/nickwells/testhelper.mod v1.3.7/go.mod h1:Ct/U2PjL0n9hGc+US6uR/s4NxSRI33NM+0ZkrDkG0XI=
-github.com/nickwells/twrap.mod v1.2.1 h1:jBhI04cXCNerkbP4uuW4vqmXakIQpjixwXa/CWn3/pQ=
-github.com/nickwells/twrap.mod v1.2.1/go.mod h1:73OYoyYwzk9DDw37SPqXsSiaNfQGzU3ApoytW2cf8LE=
+github.com/nickwells/twrap.mod v1.3.0 h1:njmyZdGzkWdMNDRM5h/NST8SFdYzSZoZk5uKToU6YJc=
+github.com/nickwells/twrap.mod v1.3.0/go.mod h1:73OYoyYwzk9DDw37SPqXsSiaNfQGzU3ApoytW2cf8LE=
 github.com/nickwells/xdg.mod v1.0.2 h1:rmQPX4dTfxTtUeoRQfkMbPCzUDwN2zP6eNwTYyBcn8w=
 github.com/nickwells/xdg.mod v1.0.2/go.mod h1:h8lRJMpY6oXdD6E3jJuolpO9QJE5FcTvUe8eyRzgyQo=
