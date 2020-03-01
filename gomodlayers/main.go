@@ -12,10 +12,10 @@ import (
 	"github.com/nickwells/col.mod/v2/col"
 	"github.com/nickwells/col.mod/v2/col/colfmt"
 	"github.com/nickwells/location.mod/location"
-	"github.com/nickwells/param.mod/v3/param"
-	"github.com/nickwells/param.mod/v3/param/paction"
-	"github.com/nickwells/param.mod/v3/param/paramset"
-	"github.com/nickwells/param.mod/v3/param/psetter"
+	"github.com/nickwells/param.mod/v4/param"
+	"github.com/nickwells/param.mod/v4/param/paction"
+	"github.com/nickwells/param.mod/v4/param/paramset"
+	"github.com/nickwells/param.mod/v4/param/psetter"
 	"github.com/nickwells/twrap.mod/twrap"
 )
 
@@ -500,16 +500,15 @@ func addParams(ps *param.PSet) error {
 	ps.Add("sort-order",
 		psetter.Enum{
 			Value: &sortBy,
-			AVM: param.AVM{
-				AllowedVals: param.AValMap{
-					ColLevel:    "in level order (lowest first)",
-					ColName:     "in name order",
-					ColUseCount: "in order of how heavily used the module is",
-					ColUsesCountInt: "in order of how much use the module makes" +
-						" of other modules in the collection",
-					ColUsesCountExt: "in order of how much use the module makes" +
-						" of modules not in the collection",
-				}}},
+			AllowedVals: param.AllowedVals{
+				ColLevel:    "in level order (lowest first)",
+				ColName:     "in name order",
+				ColUseCount: "in order of how heavily used the module is",
+				ColUsesCountInt: "in order of how much use the module makes" +
+					" of other modules in the collection",
+				ColUsesCountExt: "in order of how much use the module makes" +
+					" of modules not in the collection",
+			}},
 		"what order should the modules be sorted when reporting",
 		param.AltName("sort-by"),
 	)
@@ -517,15 +516,14 @@ func addParams(ps *param.PSet) error {
 	ps.Add("show-cols",
 		psetter.EnumMap{
 			Value: &columnsToShow,
-			AVM: param.AVM{
-				AllowedVals: param.AValMap{
-					ColLevel:    "where the module lies in the dependency order",
-					ColUseCount: "how heavily used the module is",
-					ColUsesCountInt: "how much use the module makes" +
-						" of other modules in the collection",
-					ColUsesCountExt: "how much use the module makes" +
-						" of modules not in the collection",
-				}},
+			AllowedVals: param.AllowedVals{
+				ColLevel:    "where the module lies in the dependency order",
+				ColUseCount: "how heavily used the module is",
+				ColUsesCountInt: "how much use the module makes" +
+					" of other modules in the collection",
+				ColUsesCountExt: "how much use the module makes" +
+					" of modules not in the collection",
+			},
 			AllowHiddenMapEntries: true,
 		},
 		"what columns should be shown (note that the name is always shown)",
