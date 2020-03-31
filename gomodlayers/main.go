@@ -13,9 +13,7 @@ import (
 	"github.com/nickwells/col.mod/v2/col/colfmt"
 	"github.com/nickwells/location.mod/location"
 	"github.com/nickwells/param.mod/v4/param"
-	"github.com/nickwells/param.mod/v4/param/paction"
 	"github.com/nickwells/param.mod/v4/param/paramset"
-	"github.com/nickwells/param.mod/v4/param/psetter"
 	"github.com/nickwells/twrap.mod/twrap"
 )
 
@@ -57,7 +55,8 @@ var helpTxt = "The level value indicates that the module requires modules" +
 	" having lower level values and does not require any modules having" +
 	" a higher level.\n\n" +
 	"The use count indicates how many other modules require this" +
-	" module.\n\n" +
+	" module. If you change this module, you'll have to update the go.mod" +
+	" file of this many other modules.\n\n" +
 	"The uses count (internal) indicates how many other modules from" +
 	" this collection this module requires.\n\n" +
 	"The uses count (external) indicates how many modules from outside" +
@@ -472,81 +471,4 @@ func reportModuleInfo() {
 		}
 		lastLevel = mi.Level
 	}
-}
-
-// addParams will add parameters to the passed PSet
-func addParams(ps *param.PSet) error {
-	ps.Add("hide-header", psetter.Bool{Value: &showHeader, Invert: true},
-		"suppress the printing of the header",
-		param.AltName("hide-hdr"),
-		param.AltName("no-hdr"),
-	)
-	ps.Add("hide-intro", psetter.Bool{Value: &showIntro, Invert: true},
-		"suppress the printing of the introductory text"+
-			" explaining the meaning of the report",
-		param.AltName("no-intro"),
-	)
-	ps.Add("brief", psetter.Nil{},
-		"suppress the printing of both the introductory text and the headers",
-		param.PostAction(paction.SetBool(&showHeader, false)),
-		param.PostAction(paction.SetBool(&showIntro, false)),
-	)
-
-	ps.Add("hide-dup-levels", psetter.Bool{Value: &hideDupLevels},
-		"suppress the printing of levels where the level value"+
-			" is the same as on the previous line",
-	)
-
-	ps.Add("sort-order",
-		psetter.Enum{
-			Value: &sortBy,
-			AllowedVals: param.AllowedVals{
-				ColLevel:    "in level order (lowest first)",
-				ColName:     "in name order",
-				ColUseCount: "in order of how heavily used the module is",
-				ColUsesCountInt: "in order of how much use the module makes" +
-					" of other modules in the collection",
-				ColUsesCountExt: "in order of how much use the module makes" +
-					" of modules not in the collection",
-			}},
-		"what order should the modules be sorted when reporting",
-		param.AltName("sort-by"),
-	)
-
-	ps.Add("show-cols",
-		psetter.EnumMap{
-			Value: &columnsToShow,
-			AllowedVals: param.AllowedVals{
-				ColLevel:    "where the module lies in the dependency order",
-				ColUseCount: "how heavily used the module is",
-				ColUsesCountInt: "how much use the module makes" +
-					" of other modules in the collection",
-				ColUsesCountExt: "how much use the module makes" +
-					" of modules not in the collection",
-			},
-			AllowHiddenMapEntries: true,
-		},
-		"what columns should be shown (note that the name is always shown)",
-	)
-
-	ps.Add("names-by-level", psetter.Nil{},
-		"just show the module names in level order",
-		param.PostAction(paction.SetBool(&showHeader, false)),
-		param.PostAction(paction.SetBool(&showIntro, false)),
-		param.PostAction(paction.SetString(&sortBy, ColLevel)),
-		param.PostAction(func(_ location.L, _ *param.ByName, _ []string) error {
-			columnsToShow = map[string]bool{
-				ColName: true,
-			}
-			return nil
-		}),
-	)
-
-	// allow trailing arguments
-	err := ps.SetNamedRemHandler(param.NullRemHandler{}, "go.mod-files")
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
