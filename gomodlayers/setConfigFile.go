@@ -23,7 +23,7 @@ import (
 // define the global and personal config files. It is
 // generally best practice to add the global config file
 // before adding the personal one. This is so that any
-// system-wide defaults can be overriden by personal
+// system-wide defaults can be overridden by personal
 // choice. This order also allows any parameters which
 // can only be set once to be set in the global config
 // file.
@@ -48,7 +48,7 @@ func SetConfigFile(ps *param.PSet) error {
 // define the global and personal config files. It is
 // generally best practice to add the global config file
 // before adding the personal one. This is so that any
-// system-wide defaults can be overriden by personal
+// system-wide defaults can be overridden by personal
 // choice. This order also allows any parameters which
 // can only be set once to be set in the global config
 // file.
@@ -69,4 +69,3 @@ func SetGlobalConfigFile(ps *param.PSet) error {
 		filecheck.Optional)
 	return nil
 }
-
