@@ -2,9 +2,9 @@ package main
 
 import (
 	"github.com/nickwells/location.mod/location"
-	"github.com/nickwells/param.mod/v4/param"
-	"github.com/nickwells/param.mod/v4/param/paction"
-	"github.com/nickwells/param.mod/v4/param/psetter"
+	"github.com/nickwells/param.mod/v5/param"
+	"github.com/nickwells/param.mod/v5/param/paction"
+	"github.com/nickwells/param.mod/v5/param/psetter"
 )
 
 // addParams will add parameters to the passed param.PSet
@@ -33,7 +33,7 @@ func addParams(ps *param.PSet) error {
 	ps.Add("sort-order",
 		psetter.Enum{
 			Value: &sortBy,
-			AllowedVals: param.AllowedVals{
+			AllowedVals: psetter.AllowedVals{
 				ColLevel:    "in level order (lowest first)",
 				ColName:     "in name order",
 				ColUseCount: "in order of how heavily used the module is",
@@ -49,7 +49,7 @@ func addParams(ps *param.PSet) error {
 	ps.Add("show-cols",
 		psetter.EnumMap{
 			Value: &columnsToShow,
-			AllowedVals: param.AllowedVals{
+			AllowedVals: psetter.AllowedVals{
 				ColLevel:    "where the module lies in the dependency order",
 				ColUseCount: "how heavily used the module is",
 				ColUsesCountInt: "how much use the module makes" +
