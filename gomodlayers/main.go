@@ -53,14 +53,18 @@ var modules = map[string]*ModInfo{}
 
 var helpTxt = "The level value indicates that the module requires modules" +
 	" having lower level values and does not require any modules having" +
-	" a higher level.\n\n" +
-	"The use count indicates how many other modules require this" +
-	" module. If you change this module, you'll have to update the go.mod" +
-	" file of this many other modules.\n\n" +
+	" a higher level." +
+	"\n\n" +
+	"The use count shows how many other modules require this module. A" +
+	" high use count means if you change this module, you'll have to" +
+	" update the go.mod file of many other modules." +
+	"\n\n" +
 	"The uses count (internal) indicates how many other modules from" +
-	" this collection this module requires.\n\n" +
+	" this collection this module requires." +
+	"\n\n" +
 	"The uses count (external) indicates how many modules from outside" +
-	" this collection this module requires.\n\n" +
+	" this collection this module requires." +
+	"\n\n" +
 	"This allows you to make judgements about changes you are making." +
 	" For instance, if you are changing a module at level 3," +
 	" you might have to make changes to other modules with" +
@@ -72,12 +76,21 @@ var helpTxt = "The level value indicates that the module requires modules" +
 	" then many other modules will be impacted."
 
 func main() {
-	ps := paramset.NewOrDie(addParams,
+	ps := paramset.NewOrDie(
+		addParams,
+		addExamples,
 		SetGlobalConfigFile,
 		SetConfigFile,
-		param.SetProgramDescription("This will parse the provided"+
-			" go.mod files and will print a report of where they sit"+
-			" in relation to one another.\n\n"+helpTxt),
+		param.SetProgramDescription("This will take a list of go.mod"+
+			" files as trailing arguments"+
+			" (after '"+param.DfltTerminalParam+"'), parse them and print"+
+			" a report. The report will show how they relate to one"+
+			" another with regards to dependencies and can print them in"+
+			" such an order that an earlier module does not depend on any"+
+			" subsequent module."+
+			"\n\n"+
+			"By default any report will be preceded with a description of"+
+			" what the various columns mean."),
 	)
 
 	ps.Parse()
@@ -334,15 +347,16 @@ func makeModInfoSlice() []*ModInfo {
 		ms = append(ms, mi)
 	}
 
-	if sortBy == ColLevel {
+	switch sortBy {
+	case ColLevel:
 		sort.Slice(ms, func(i, j int) bool { return lessByLevel(ms, i, j) })
-	} else if sortBy == ColName {
+	case ColName:
 		sort.Slice(ms, func(i, j int) bool { return ms[i].Name < ms[j].Name })
-	} else if sortBy == ColUseCount {
+	case ColUseCount:
 		sort.Slice(ms, func(i, j int) bool { return lessByUseCount(ms, i, j) })
-	} else if sortBy == ColUsesCountInt {
+	case ColUsesCountInt:
 		sort.Slice(ms, func(i, j int) bool { return lessByReqCountInt(ms, i, j) })
-	} else if sortBy == ColUsesCountExt {
+	case ColUsesCountExt:
 		sort.Slice(ms, func(i, j int) bool { return lessByReqCountExt(ms, i, j) })
 	}
 	return ms

@@ -57,6 +57,9 @@ func addParams(ps *param.PSet) error {
 				ColUsesCountExt: "how much use the module makes" +
 					" of modules not in the collection",
 			},
+			Aliases: psetter.Aliases{
+				"all": {ColLevel, ColUseCount, ColUsesCountExt, ColUsesCountInt},
+			},
 			AllowHiddenMapEntries: true,
 		},
 		"what columns should be shown (note that the name is always shown)",
@@ -82,14 +85,6 @@ func addParams(ps *param.PSet) error {
 	if err != nil {
 		return err
 	}
-
-	ps.AddExample(
-		"gomodlayers -names-by-level"+
-			" -- dir1/go.mod dir2/go.mod dir3/go.mod",
-		"This will print just the names of the modules but in an order"+
-			" such that no module depends on any of the modules listed"+
-			" after it. This can be useful when you want to know the best"+
-			" order to update the modules.")
 
 	return nil
 }
