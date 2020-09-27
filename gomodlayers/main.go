@@ -1,5 +1,6 @@
-// gomodlayers
 package main
+
+// gomodlayers
 
 import (
 	"bufio"
