@@ -495,14 +495,8 @@ func reportModuleInfo() {
 		colVals = addUsedByCol(mi, colVals, 0)
 
 		err = rpt.PrintRowSkipCols(skipCount, colVals...)
-		if err == nil && columnsToShow[ColUsedBy] {
-			for i := 1; i < len(mi.ReqdBy); i++ {
-				err = rpt.PrintRowSkipCols(skipCount+skipCountExtras,
-					mi.ReqdBy[i].Name)
-				if err != nil {
-					break
-				}
-			}
+		if err == nil {
+			err = reportExtraUsedByValues(rpt, skipCount+skipCountExtras, mi)
 		}
 		if err != nil {
 			fmt.Println("Error found while printing the report:", err)
@@ -510,4 +504,17 @@ func reportModuleInfo() {
 		}
 		lastLevel = mi.Level
 	}
+}
+
+// reportExtraUsedByValues reports any additional UsedBy module names
+func reportExtraUsedByValues(rpt *col.Report, skip uint, mi *ModInfo) error {
+	if columnsToShow[ColUsedBy] {
+		for i := 1; i < len(mi.ReqdBy); i++ {
+			err := rpt.PrintRowSkipCols(skip, mi.ReqdBy[i].Name)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
