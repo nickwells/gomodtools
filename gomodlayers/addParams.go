@@ -52,13 +52,20 @@ func addParams(ps *param.PSet) error {
 			AllowedVals: psetter.AllowedVals{
 				ColLevel:    "where the module lies in the dependency order",
 				ColUseCount: "how heavily used the module is",
+				ColUsedBy:   "the modules that use this",
 				ColUsesCountInt: "how much use the module makes" +
 					" of other modules in the collection",
 				ColUsesCountExt: "how much use the module makes" +
 					" of modules not in the collection",
 			},
 			Aliases: psetter.Aliases{
-				"all": {ColLevel, ColUseCount, ColUsesCountExt, ColUsesCountInt},
+				"all": {
+					ColLevel,
+					ColUseCount,
+					ColUsedBy,
+					ColUsesCountExt,
+					ColUsesCountInt,
+				},
 			},
 			AllowHiddenMapEntries: true,
 		},

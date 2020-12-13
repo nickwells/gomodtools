@@ -24,6 +24,7 @@ const (
 	ColLevel        = "level"
 	ColName         = "name"
 	ColUseCount     = "use-count"
+	ColUsedBy       = "used-by"
 	ColUsesCountInt = "uses-count-int"
 	ColUsesCountExt = "uses-count-ext"
 )
@@ -176,8 +177,8 @@ func initLevel(mi *ModInfo, loc *location.L) {
 // populateRequirements expects to be passed a non-nil ModInfo and the parts
 // of a require line. It will find the corresponding module for the required
 // module and record that as a requirement of the module and also record that
-// this module requires the other module. If a problem it will report it and
-// return false, otherwise it returns true.
+// this module requires the other module. If there is a problem it will
+// report it and return false, otherwise it returns true.
 func populateRequirements(mi *ModInfo, parts []string, loc *location.L) bool {
 	if mi == nil {
 		fmt.Fprintf(os.Stderr, "Error: no module is defined at %s\n", loc)
@@ -406,6 +407,9 @@ func makeReport(h *col.Header) (*col.Report, error) {
 	if columnsToShow[ColUsesCountExt] {
 		cols = append(cols, col.New(colfmt.Int{W: 3}, "Count", "Uses (ext)"))
 	}
+	if columnsToShow[ColUsedBy] {
+		cols = append(cols, col.New(colfmt.String{}, "Used By"))
+	}
 	return col.NewReport(h, os.Stdout, cols...)
 }
 
@@ -423,6 +427,19 @@ func addLevelCol(mi *ModInfo, colVals []interface{}) []interface{} {
 func addUseCountCol(mi *ModInfo, colVals []interface{}) []interface{} {
 	if columnsToShow[ColUseCount] {
 		colVals = append(colVals, len(mi.ReqdBy))
+	}
+	return colVals
+}
+
+// addUsedByCol adds the use count column value to the colVals and returns
+// the new colVals
+func addUsedByCol(mi *ModInfo, colVals []interface{}, i int) []interface{} {
+	if columnsToShow[ColUsedBy] {
+		val := ""
+		if len(mi.ReqdBy) > 0 {
+			val = mi.ReqdBy[i].Name
+		}
+		colVals = append(colVals, val)
 	}
 	return colVals
 }
@@ -464,21 +481,28 @@ func reportModuleInfo() {
 			continue
 		}
 		colVals := make([]interface{}, 0, len(columnsToShow))
+		var skipCount uint
 		if lastLevel == mi.Level && hideDupLevels && columnsToShow[ColLevel] {
-			colVals = append(colVals, mi.Name)
-			colVals = addUseCountCol(mi, colVals)
-			colVals = addUsesCountIntCol(mi, colVals)
-			colVals = addUsesCountExtCol(mi, colVals)
-
-			err = rpt.PrintRowSkipCols(1, colVals...)
+			skipCount = 1
 		} else {
 			colVals = addLevelCol(mi, colVals)
-			colVals = append(colVals, mi.Name)
-			colVals = addUseCountCol(mi, colVals)
-			colVals = addUsesCountIntCol(mi, colVals)
-			colVals = addUsesCountExtCol(mi, colVals)
+		}
+		colVals = append(colVals, mi.Name)
+		colVals = addUseCountCol(mi, colVals)
+		colVals = addUsesCountIntCol(mi, colVals)
+		colVals = addUsesCountExtCol(mi, colVals)
+		skipCountExtras := uint(len(colVals))
+		colVals = addUsedByCol(mi, colVals, 0)
 
-			err = rpt.PrintRow(colVals...)
+		err = rpt.PrintRowSkipCols(skipCount, colVals...)
+		if err == nil && columnsToShow[ColUsedBy] {
+			for i := 1; i < len(mi.ReqdBy); i++ {
+				err = rpt.PrintRowSkipCols(skipCount+skipCountExtras,
+					mi.ReqdBy[i].Name)
+				if err != nil {
+					break
+				}
+			}
 		}
 		if err != nil {
 			fmt.Println("Error found while printing the report:", err)
