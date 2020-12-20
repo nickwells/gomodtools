@@ -6,7 +6,7 @@ require (
 	github.com/nickwells/col.mod/v2 v2.1.12
 	github.com/nickwells/filecheck.mod v1.1.8
 	github.com/nickwells/location.mod v1.2.16
-	github.com/nickwells/param.mod/v5 v5.2.8
+	github.com/nickwells/param.mod/v5 v5.2.9
 	github.com/nickwells/twrap.mod v1.4.10
 	github.com/nickwells/xdg.mod v1.0.5
 )
