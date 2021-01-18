@@ -9,4 +9,5 @@ require (
 	github.com/nickwells/param.mod/v5 v5.3.2
 	github.com/nickwells/twrap.mod v1.4.10
 	github.com/nickwells/xdg.mod v1.0.5
+	golang.org/x/sys v0.0.0-20210113181707-4bcb84eeeb78 // indirect
 )
