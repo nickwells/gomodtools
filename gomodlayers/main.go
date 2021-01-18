@@ -7,8 +7,10 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"regexp"
 	"sort"
+	"strings"
 
 	"github.com/nickwells/col.mod/v2/col"
 	"github.com/nickwells/col.mod/v2/col/colfmt"
@@ -84,7 +86,7 @@ func main() {
 		SetGlobalConfigFile,
 		SetConfigFile,
 		param.SetProgramDescription("This will take a list of go.mod"+
-			" files as trailing arguments"+
+			" files (or directories) as trailing arguments"+
 			" (after '"+param.DfltTerminalParam+"'), parse them and print"+
 			" a report. The report will show how they relate to one"+
 			" another with regards to dependencies and can print them in"+
@@ -92,7 +94,11 @@ func main() {
 			" subsequent module."+
 			"\n\n"+
 			"By default any report will be preceded with a description of"+
-			" what the various columns mean."),
+			" what the various columns mean."+
+			"\n\n"+
+			"If one of the trailiing arguments does not end with '/go.mod'"+
+			" then it is taken as a directory name and the missing"+
+			" filename is automatically appended."),
 	)
 
 	ps.Parse()
@@ -104,9 +110,15 @@ func main() {
 }
 
 // parseAllGoModFiles will process the list of filenames, opening each one in
-// turn and populating the moduleInfo map
+// turn and populating the moduleInfo map. If any filename doesn't end with
+// go.mod then that is added to the end of the path before further processing
 func parseAllGoModFiles(goModFilenames []string) {
+	const goMod = "go.mod"
 	for _, fname := range goModFilenames {
+		if !strings.HasSuffix(fname, goMod) {
+			fname = filepath.Join(fname, goMod)
+		}
+
 		f, err := os.Open(fname)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
