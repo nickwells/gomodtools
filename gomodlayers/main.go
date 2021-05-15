@@ -37,10 +37,13 @@ var columnsToShow = map[string]bool{
 	ColUseCount: true,
 }
 
-var hideDupLevels bool
-var showIntro = true
-var showHeader = true
-var sortBy = ColLevel
+var (
+	hideDupLevels bool
+	showIntro     = true
+	showHeader    = true
+
+	sortBy = ColLevel
+)
 
 // ModInfo records information gleaned from the go.mod files
 type ModInfo struct {

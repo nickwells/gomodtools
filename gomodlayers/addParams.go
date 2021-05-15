@@ -41,7 +41,8 @@ func addParams(ps *param.PSet) error {
 					" of other modules in the collection",
 				ColUsesCountExt: "in order of how much use the module makes" +
 					" of modules not in the collection",
-			}},
+			},
+		},
 		"what order should the modules be sorted when reporting",
 		param.AltName("sort-by"),
 	)
