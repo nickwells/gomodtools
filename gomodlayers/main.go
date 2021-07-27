@@ -12,8 +12,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/nickwells/col.mod/v2/col"
-	"github.com/nickwells/col.mod/v2/col/colfmt"
+	"github.com/nickwells/col.mod/v3/col"
+	"github.com/nickwells/col.mod/v3/col/colfmt"
 	"github.com/nickwells/location.mod/location"
 	"github.com/nickwells/param.mod/v5/param"
 	"github.com/nickwells/param.mod/v5/param/paramset"
@@ -405,7 +405,7 @@ func makeHeader() (*col.Header, error) {
 
 // makeReport constructs the report and returns it with an error. If the
 // error is not nii the report is invalid
-func makeReport(h *col.Header) (*col.Report, error) {
+func makeReport(h *col.Header) *col.Report {
 	cols := make([]*col.Col, 0, len(columnsToShow))
 
 	if columnsToShow[ColLevel] {
@@ -425,7 +425,10 @@ func makeReport(h *col.Header) (*col.Report, error) {
 	if columnsToShow[ColUsedBy] {
 		cols = append(cols, col.New(colfmt.String{}, "Used By"))
 	}
-	return col.NewReport(h, os.Stdout, cols...)
+	if len(cols) == 1 {
+		return col.NewReport(h, os.Stdout, cols[0])
+	}
+	return col.NewReport(h, os.Stdout, cols[0], cols[1:]...)
 }
 
 // addLevelCol adds the level column value to the colVals and returns the new
@@ -484,11 +487,7 @@ func reportModuleInfo() {
 		fmt.Println("Error found while constructing the report header:", err)
 		return
 	}
-	rpt, err := makeReport(h)
-	if err != nil {
-		fmt.Println("Error found while constructing the report:", err)
-		return
-	}
+	rpt := makeReport(h)
 
 	lastLevel := -1
 	for _, mi := range makeModInfoSlice() {
