@@ -11,13 +11,12 @@ import (
 func addParams(ps *param.PSet) error {
 	ps.Add("hide-header", psetter.Bool{Value: &showHeader, Invert: true},
 		"suppress the printing of the header",
-		param.AltName("hide-hdr"),
-		param.AltName("no-hdr"),
+		param.AltNames("hide-hdr", "no-hdr"),
 	)
 	ps.Add("hide-intro", psetter.Bool{Value: &showIntro, Invert: true},
 		"suppress the printing of the introductory text"+
 			" explaining the meaning of the report",
-		param.AltName("no-intro"),
+		param.AltNames("no-intro"),
 	)
 	ps.Add("brief", psetter.Nil{},
 		"suppress the printing of both the introductory text and the headers",
@@ -44,7 +43,7 @@ func addParams(ps *param.PSet) error {
 			},
 		},
 		"what order should the modules be sorted when reporting",
-		param.AltName("sort-by"),
+		param.AltNames("sort-by"),
 	)
 
 	ps.Add("show-cols",
@@ -71,8 +70,7 @@ func addParams(ps *param.PSet) error {
 			AllowHiddenMapEntries: true,
 		},
 		"what columns should be shown (note that the name is always shown)",
-		param.AltName("show"),
-		param.AltName("cols"),
+		param.AltNames("show", "cols"),
 	)
 
 	ps.Add("names-by-level", psetter.Nil{},
