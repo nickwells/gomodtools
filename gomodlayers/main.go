@@ -18,6 +18,7 @@ import (
 	"github.com/nickwells/param.mod/v5/param"
 	"github.com/nickwells/param.mod/v5/param/paramset"
 	"github.com/nickwells/twrap.mod/twrap"
+	"github.com/nickwells/versionparams.mod/versionparams"
 )
 
 // Created: Thu Mar 28 12:13:29 2019
@@ -84,6 +85,7 @@ var helpTxt = "The level value indicates that the module requires modules" +
 
 func main() {
 	ps := paramset.NewOrDie(
+		versionparams.AddParams,
 		addParams,
 		addExamples,
 		SetGlobalConfigFile,
