@@ -435,7 +435,7 @@ func makeReport(h *col.Header) *col.Report {
 
 // addLevelCol adds the level column value to the colVals and returns the new
 // colVals
-func addLevelCol(mi *ModInfo, colVals []interface{}) []interface{} {
+func addLevelCol(mi *ModInfo, colVals []any) []any {
 	if columnsToShow[ColLevel] {
 		colVals = append(colVals, mi.Level)
 	}
@@ -444,7 +444,7 @@ func addLevelCol(mi *ModInfo, colVals []interface{}) []interface{} {
 
 // addUseCountCol adds the use count column value to the colVals and returns
 // the new colVals
-func addUseCountCol(mi *ModInfo, colVals []interface{}) []interface{} {
+func addUseCountCol(mi *ModInfo, colVals []any) []any {
 	if columnsToShow[ColUseCount] {
 		colVals = append(colVals, len(mi.ReqdBy))
 	}
@@ -453,7 +453,7 @@ func addUseCountCol(mi *ModInfo, colVals []interface{}) []interface{} {
 
 // addUsedByCol adds the use count column value to the colVals and returns
 // the new colVals
-func addUsedByCol(mi *ModInfo, colVals []interface{}, i int) []interface{} {
+func addUsedByCol(mi *ModInfo, colVals []any, i int) []any {
 	if columnsToShow[ColUsedBy] {
 		val := ""
 		if len(mi.ReqdBy) > 0 {
@@ -466,7 +466,7 @@ func addUsedByCol(mi *ModInfo, colVals []interface{}, i int) []interface{} {
 
 // addUsesCountIntCol adds the uses count (internal) column value to the
 // colVals and returns the new colVals
-func addUsesCountIntCol(mi *ModInfo, colVals []interface{}) []interface{} {
+func addUsesCountIntCol(mi *ModInfo, colVals []any) []any {
 	if columnsToShow[ColUsesCountInt] {
 		colVals = append(colVals, mi.ReqCountInternal)
 	}
@@ -475,7 +475,7 @@ func addUsesCountIntCol(mi *ModInfo, colVals []interface{}) []interface{} {
 
 // addUsesCountExtCol adds the uses count (external) column value to the
 // colVals and returns the new colVals
-func addUsesCountExtCol(mi *ModInfo, colVals []interface{}) []interface{} {
+func addUsesCountExtCol(mi *ModInfo, colVals []any) []any {
 	if columnsToShow[ColUsesCountExt] {
 		colVals = append(colVals, mi.ReqCountExternal)
 	}
@@ -496,7 +496,7 @@ func reportModuleInfo() {
 		if mi.Loc == nil {
 			continue
 		}
-		colVals := make([]interface{}, 0, len(columnsToShow))
+		colVals := make([]any, 0, len(columnsToShow))
 		var skipCount uint
 		if lastLevel == mi.Level && hideDupLevels && columnsToShow[ColLevel] {
 			skipCount = 1
