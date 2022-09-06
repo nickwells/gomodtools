@@ -386,7 +386,7 @@ func printReportIntro(w io.Writer, n uint64) {
 	if n != 0 {
 		return
 	}
-	twc := twrap.NewTWConfOrPanic(twrap.TWConfOptSetWriter(w))
+	twc := twrap.NewTWConfOrPanic(twrap.SetWriter(w))
 	twc.Wrap("This shows how the modules relate to one another.\n\n"+helpTxt, 0)
 }
 
