@@ -86,6 +86,28 @@ func addParams(ps *param.PSet) error {
 		}),
 	)
 
+	ps.Add("filter", psetter.Map{Value: &modFilter},
+		"the module name to filter by."+
+			" The report will only show this module"+
+			" and any module that uses this module."+
+			" The notion of 'used' is recursive so that"+
+			" if the filter is on module A"+
+			" and module B uses A and C uses B but not A (directly)"+
+			" then modules A, B and C will be shown."+
+			"\n\n"+
+			"The results will be sorted by level and"+
+			" only the module names will be shown.",
+		param.PostAction(paction.SetBool(&showHeader, false)),
+		param.PostAction(paction.SetBool(&showIntro, false)),
+		param.PostAction(paction.SetString(&sortBy, ColLevel)),
+		param.PostAction(func(_ location.L, _ *param.ByName, _ []string) error {
+			columnsToShow = map[string]bool{
+				ColName: true,
+			}
+			return nil
+		}),
+	)
+
 	// allow trailing arguments
 	err := ps.SetNamedRemHandler(param.NullRemHandler{}, "go.mod-files")
 	if err != nil {

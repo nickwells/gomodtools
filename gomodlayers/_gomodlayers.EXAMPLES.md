@@ -10,6 +10,18 @@ module depends on any of the modules listed after it\. This can be useful when
 you want to know the best order to update the modules\.
 
 ```sh
+gomodlayers -filter github.com/myname/modname -- modname/go.mod othermod/go.mod mod3/go.mod
+```
+This will print just the names of the modules but in an order such that no
+module depends on any of the modules listed after it\. The added feature is that
+it will only print the filtered module and any modules which depend on it
+recursively\.
+
+This can be useful when you want to know the best order to update the modules\.
+The added feature is that you will only be shown the relevant subsection of
+modules\.
+
+```sh
 gomodlayers -- dir1/go.mod dir2/go.mod dir3/go.mod
 ```
 This will print the default output: an extensive introduction explaining the

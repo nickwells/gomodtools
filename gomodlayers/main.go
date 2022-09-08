@@ -44,6 +44,8 @@ var (
 	showHeader    = true
 
 	sortBy = ColLevel
+
+	modFilter map[string]bool
 )
 
 // ModInfo records information gleaned from the go.mod files
@@ -482,44 +484,64 @@ func addUsesCountExtCol(mi *ModInfo, colVals []any) []any {
 	return colVals
 }
 
-// reportModuleInfo prints the module information
-func reportModuleInfo() {
-	h, err := makeHeader()
-	if err != nil {
-		fmt.Println("Error found while constructing the report header:", err)
-		return
+// addReqsToFilters will add all the ReqdBy entries for the module into the
+// filter map.
+func addReqsToFilters(mi *ModInfo) {
+	for _, rb := range mi.ReqdBy {
+		modFilter[rb.Name] = true
 	}
-	rpt := makeReport(h)
+}
 
-	lastLevel := -1
-	for _, mi := range makeModInfoSlice() {
-		if mi.Loc == nil {
-			continue
-		}
-		colVals := make([]any, 0, len(columnsToShow))
-		var skipCount uint
-		if lastLevel == mi.Level && hideDupLevels && columnsToShow[ColLevel] {
-			skipCount = 1
+// skipModInfo returns true if the module info record should be skipped. It
+// will be skippped if:
+//
+// The location has not been filled in (if its an external module).
+//
+// There is a module filter and the name does not match an entry in the
+// filters map.
+func skipModInfo(mi *ModInfo) bool {
+	if mi.Loc == nil {
+		return true
+	}
+
+	if len(modFilter) > 0 {
+		if modFilter[mi.Name] {
+			addReqsToFilters((mi))
 		} else {
-			colVals = addLevelCol(mi, colVals)
+			return true
 		}
-		colVals = append(colVals, mi.Name)
-		colVals = addUseCountCol(mi, colVals)
-		colVals = addUsesCountIntCol(mi, colVals)
-		colVals = addUsesCountExtCol(mi, colVals)
-		skipCountExtras := uint(len(colVals))
-		colVals = addUsedByCol(mi, colVals, 0)
-
-		err = rpt.PrintRowSkipCols(skipCount, colVals...)
-		if err == nil {
-			err = reportExtraUsedByValues(rpt, skipCount+skipCountExtras, mi)
-		}
-		if err != nil {
-			fmt.Println("Error found while printing the report:", err)
-			break
-		}
-		lastLevel = mi.Level
 	}
+	return false
+}
+
+// printModInfo gathers the values to be printed and then prints the row. It
+// calculates the columns to be skipped:
+//
+// Firstly the level column is skipped if it is the same as the previous
+// level, the hideDupLevels flag is set and module levels are being shown.
+//
+// For the first row of each module this is all that is skipped but for
+// subsequent rows all the columns up to the UsedBy column are skipped
+func printModInfo(rpt *col.Report, mi *ModInfo, lastLevel int) error {
+	vals := make([]any, 0, len(columnsToShow))
+	var skipCount uint
+	if lastLevel == mi.Level && hideDupLevels && columnsToShow[ColLevel] {
+		skipCount = 1
+	} else {
+		vals = addLevelCol(mi, vals)
+	}
+	vals = append(vals, mi.Name)
+	vals = addUseCountCol(mi, vals)
+	vals = addUsesCountIntCol(mi, vals)
+	vals = addUsesCountExtCol(mi, vals)
+	skipCountExtras := uint(len(vals))
+	vals = addUsedByCol(mi, vals, 0)
+
+	err := rpt.PrintRowSkipCols(skipCount, vals...)
+	if err != nil {
+		return err
+	}
+	return reportExtraUsedByValues(rpt, skipCount+skipCountExtras, mi)
 }
 
 // reportExtraUsedByValues reports any additional UsedBy module names
@@ -533,4 +555,29 @@ func reportExtraUsedByValues(rpt *col.Report, skip uint, mi *ModInfo) error {
 		}
 	}
 	return nil
+}
+
+// reportModuleInfo prints the module information
+func reportModuleInfo() {
+	h, err := makeHeader()
+	if err != nil {
+		fmt.Println("Error found while constructing the report header:", err)
+		return
+	}
+	rpt := makeReport(h)
+
+	lastLevel := -1
+	for _, mi := range makeModInfoSlice() {
+		if skipModInfo(mi) {
+			continue
+		}
+
+		err = printModInfo(rpt, mi, lastLevel)
+
+		if err != nil {
+			fmt.Println("Error found while printing the report:", err)
+			break
+		}
+		lastLevel = mi.Level
+	}
 }
