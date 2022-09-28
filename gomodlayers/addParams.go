@@ -7,29 +7,61 @@ import (
 	"github.com/nickwells/param.mod/v5/param/psetter"
 )
 
+const (
+	paramHideHeader    = "hide-header"
+	paramHideIntro     = "hide-intro"
+	paramHideDupLevels = "hide-dup-levels"
+	paramBrief         = "brief"
+	paramNoSkips       = "no-skips"
+	paramSortOrder     = "sort-order"
+	paramShowCols      = "show-cols"
+	paramNamesByLevel  = "names-by-level"
+	paramNamesOnly     = "names-only"
+	paramFilter        = "filter"
+)
+
 // addParams will add parameters to the passed param.PSet
 func addParams(ps *param.PSet) error {
-	ps.Add("hide-header", psetter.Bool{Value: &showHeader, Invert: true},
+	ps.Add(paramNamesOnly, psetter.Nil{},
+		"reset the list of columns to only show the module names",
+		param.PostAction(func(_ location.L, _ *param.ByName, _ []string) error {
+			columnsToShow = map[string]bool{
+				ColName: true,
+			}
+			return nil
+		}),
+	)
+
+	ps.Add(paramHideHeader, psetter.Bool{Value: &showHeader, Invert: true},
 		"suppress the printing of the header",
 		param.AltNames("hide-hdr", "no-hdr"),
 	)
-	ps.Add("hide-intro", psetter.Bool{Value: &showIntro, Invert: true},
+	ps.Add(paramHideIntro, psetter.Bool{Value: &showIntro, Invert: true},
 		"suppress the printing of the introductory text"+
 			" explaining the meaning of the report",
 		param.AltNames("no-intro"),
 	)
-	ps.Add("brief", psetter.Nil{},
+	ps.Add(paramBrief, psetter.Nil{},
 		"suppress the printing of both the introductory text and the headers",
 		param.PostAction(paction.SetBool(&showHeader, false)),
 		param.PostAction(paction.SetBool(&showIntro, false)),
 	)
 
-	ps.Add("hide-dup-levels", psetter.Bool{Value: &hideDupLevels},
+	ps.Add(paramHideDupLevels, psetter.Bool{Value: &hideDupLevels},
 		"suppress the printing of levels where the level value"+
 			" is the same as on the previous line",
 	)
 
-	ps.Add("sort-order",
+	ps.Add(paramNoSkips, psetter.Bool{Value: &canSkipCols, Invert: true},
+		"don't skip the printing of columns where the row"+
+			" value is the same as on the previous line."+
+			" Note that this value overrides"+
+			" the '"+paramHideDupLevels+"' parameter (if set)",
+		param.PostAction(paction.SetBool(&hideDupLevels, false)),
+		param.AltNames("dont-skip-cols", "dont-skip"),
+	)
+
+	ps.Add(paramSortOrder,
 		psetter.Enum{
 			Value: &sortBy,
 			AllowedVals: psetter.AllowedVals{
@@ -46,7 +78,7 @@ func addParams(ps *param.PSet) error {
 		param.AltNames("sort-by"),
 	)
 
-	ps.Add("show-cols",
+	ps.Add(paramShowCols,
 		psetter.EnumMap{
 			Value: &columnsToShow,
 			AllowedVals: psetter.AllowedVals{
@@ -73,7 +105,7 @@ func addParams(ps *param.PSet) error {
 		param.AltNames("show", "cols"),
 	)
 
-	ps.Add("names-by-level", psetter.Nil{},
+	ps.Add(paramNamesByLevel, psetter.Nil{},
 		"just show the module names in level order",
 		param.PostAction(paction.SetBool(&showHeader, false)),
 		param.PostAction(paction.SetBool(&showIntro, false)),
@@ -86,26 +118,14 @@ func addParams(ps *param.PSet) error {
 		}),
 	)
 
-	ps.Add("filter", psetter.Map{Value: &modFilter},
+	ps.Add(paramFilter, psetter.Map{Value: &modFilter},
 		"the module name to filter by."+
 			" The report will only show this module"+
 			" and any module that uses this module."+
 			" The notion of 'used' is recursive so that"+
 			" if the filter is on module A"+
 			" and module B uses A and C uses B but not A (directly)"+
-			" then modules A, B and C will be shown."+
-			"\n\n"+
-			"The results will be sorted by level and"+
-			" only the module names will be shown.",
-		param.PostAction(paction.SetBool(&showHeader, false)),
-		param.PostAction(paction.SetBool(&showIntro, false)),
-		param.PostAction(paction.SetString(&sortBy, ColLevel)),
-		param.PostAction(func(_ location.L, _ *param.ByName, _ []string) error {
-			columnsToShow = map[string]bool{
-				ColName: true,
-			}
-			return nil
-		}),
+			" then modules A, B and C will be shown.",
 	)
 
 	// allow trailing arguments

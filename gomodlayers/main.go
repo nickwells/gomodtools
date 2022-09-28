@@ -40,6 +40,7 @@ var columnsToShow = map[string]bool{
 
 var (
 	hideDupLevels bool
+	canSkipCols   = true
 	showIntro     = true
 	showHeader    = true
 
@@ -479,7 +480,7 @@ func skipModInfo(mi *ModInfo) bool {
 }
 
 // printModInfo gathers the values to be printed and then prints the row. It
-// calculates the columns to be skipped:
+// calculates the columns to be skipped (unless canSkipCols is set to false):
 //
 // Firstly the level column is skipped if it is the same as the previous
 // level, the hideDupLevels flag is set and module levels are being shown.
@@ -489,7 +490,10 @@ func skipModInfo(mi *ModInfo) bool {
 func printModInfo(rpt *col.Report, mi *ModInfo, lastLevel int) error {
 	vals := make([]any, 0, len(columnsToShow))
 	var skipCount uint
-	if lastLevel == mi.Level && hideDupLevels && columnsToShow[ColLevel] {
+	if lastLevel == mi.Level &&
+		hideDupLevels &&
+		columnsToShow[ColLevel] &&
+		canSkipCols {
 		skipCount = 1
 	} else {
 		vals = addLevelCol(mi, vals)
@@ -498,26 +502,36 @@ func printModInfo(rpt *col.Report, mi *ModInfo, lastLevel int) error {
 	vals = addUseCountCol(mi, vals)
 	vals = addUsesCountIntCol(mi, vals)
 	vals = addUsesCountExtCol(mi, vals)
-	skipCountExtras := uint(len(vals))
-	vals = addUsedByCol(mi, vals, 0)
+	var skipCountExtras uint
+	if canSkipCols {
+		skipCountExtras = uint(len(vals))
+	}
 
-	err := rpt.PrintRowSkipCols(skipCount, vals...)
+	err := rpt.PrintRowSkipCols(skipCount, addUsedByCol(mi, vals, 0)...)
 	if err != nil {
 		return err
 	}
-	return reportExtraUsedByValues(rpt, skipCount+skipCountExtras, mi)
+	return reportExtraUsedByValues(rpt, skipCount+skipCountExtras, vals, mi)
 }
 
 // reportExtraUsedByValues reports any additional UsedBy module names
-func reportExtraUsedByValues(rpt *col.Report, skip uint, mi *ModInfo) error {
-	if columnsToShow[ColUsedBy] {
-		for i := 1; i < len(mi.ReqdBy); i++ {
-			err := rpt.PrintRowSkipCols(skip, mi.ReqdBy[i].Name)
-			if err != nil {
-				return err
-			}
+func reportExtraUsedByValues(rpt *col.Report, skip uint,
+	vals []any, mi *ModInfo,
+) error {
+	if !columnsToShow[ColUsedBy] {
+		return nil
+	}
+
+	if canSkipCols {
+		vals = vals[:0]
+	}
+	for i := 1; i < len(mi.ReqdBy); i++ {
+		err := rpt.PrintRowSkipCols(skip, addUsedByCol(mi, vals, i)...)
+		if err != nil {
+			return err
 		}
 	}
+
 	return nil
 }
 
