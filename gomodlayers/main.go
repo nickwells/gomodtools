@@ -312,13 +312,13 @@ func findMaxNameLen() int {
 // makeModInfoSlice returns the modules map as a slice of ModInfo
 // pointers. The slice will be sorted according to the value of the sort
 // parameter
-func makeModInfoSlice() []*ModInfo {
+func makeModInfoSlice(order string) []*ModInfo {
 	ms := make([]*ModInfo, 0, len(modules))
 	for _, mi := range modules {
 		ms = append(ms, mi)
 	}
 
-	switch sortBy {
+	switch order {
 	case ColLevel:
 		sort.Slice(ms, func(i, j int) bool { return lessByLevel(ms, i, j) })
 	case ColName:
@@ -326,9 +326,11 @@ func makeModInfoSlice() []*ModInfo {
 	case ColUseCount:
 		sort.Slice(ms, func(i, j int) bool { return lessByUseCount(ms, i, j) })
 	case ColUsesCountInt:
-		sort.Slice(ms, func(i, j int) bool { return lessByReqCountInt(ms, i, j) })
+		sort.Slice(ms,
+			func(i, j int) bool { return lessByReqCountInt(ms, i, j) })
 	case ColUsesCountExt:
-		sort.Slice(ms, func(i, j int) bool { return lessByReqCountExt(ms, i, j) })
+		sort.Slice(ms,
+			func(i, j int) bool { return lessByReqCountExt(ms, i, j) })
 	}
 	return ms
 }
@@ -511,13 +513,13 @@ func reportExtraUsedByValues(rpt *col.Report, skip uint, mi *ModInfo) error {
 func reportModuleInfo() {
 	h, err := makeHeader()
 	if err != nil {
-		fmt.Println("Error found while constructing the report header:", err)
+		fmt.Println("Couldn't make the report header:", err)
 		return
 	}
 	rpt := makeReport(h)
 
 	lastLevel := -1
-	for _, mi := range makeModInfoSlice() {
+	for _, mi := range makeModInfoSlice(sortBy) {
 		if skipModInfo(mi) {
 			continue
 		}
