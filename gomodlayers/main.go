@@ -113,6 +113,7 @@ func main() {
 	parseAllGoModFiles(ps.Remainder())
 	calcLevels()
 	calcReqCount()
+	expandModFilters()
 	reportModuleInfo()
 }
 
@@ -444,6 +445,20 @@ func addReqsToFilters(mi *ModInfo) {
 	}
 }
 
+// expandModFilters takes the initial set of modFilters and adds all the
+// other modules that it is required by.
+func expandModFilters() {
+	if len(modFilter) == 0 {
+		return
+	}
+
+	for _, mi := range makeModInfoSlice(ColLevel) {
+		if modFilter[mi.Name] {
+			addReqsToFilters(mi)
+		}
+	}
+}
+
 // skipModInfo returns true if the module info record should be skipped. It
 // will be skippped if:
 //
@@ -456,13 +471,10 @@ func skipModInfo(mi *ModInfo) bool {
 		return true
 	}
 
-	if len(modFilter) > 0 {
-		if modFilter[mi.Name] {
-			addReqsToFilters((mi))
-		} else {
-			return true
-		}
+	if len(modFilter) > 0 && !modFilter[mi.Name] {
+		return true
 	}
+
 	return false
 }
 
