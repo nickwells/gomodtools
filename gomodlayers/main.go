@@ -3,12 +3,10 @@ package main
 // gomodlayers
 
 import (
-	"bufio"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
-	"regexp"
 	"sort"
 	"strings"
 
@@ -48,19 +46,6 @@ var (
 
 	modFilter map[string]bool
 )
-
-// ModInfo records information gleaned from the go.mod files
-type ModInfo struct {
-	Loc              *location.L
-	Name             string
-	Reqs             []*ModInfo
-	ReqCountInternal int
-	ReqCountExternal int
-	Level            int
-	ReqdBy           []*ModInfo
-}
-
-var modules = map[string]*ModInfo{}
 
 var helpTxt = "The level value indicates that the module requires modules" +
 	" having lower level values and does not require any modules having" +
@@ -111,17 +96,18 @@ func main() {
 
 	ps.Parse()
 
-	parseAllGoModFiles(ps.Remainder())
-	calcLevels()
-	calcReqCount()
-	expandModFilters()
-	reportModuleInfo()
+	modules := parseAllGoModFiles(ps.Remainder())
+	modules.calcLevels()
+	modules.calcReqCount()
+	modules.expandModFilters()
+	modules.reportModuleInfo()
 }
 
 // parseAllGoModFiles will process the list of filenames, opening each one in
 // turn and populating the moduleInfo map. If any filename doesn't end with
 // go.mod then that is added to the end of the path before further processing
-func parseAllGoModFiles(goModFilenames []string) {
+func parseAllGoModFiles(goModFilenames []string) ModMap {
+	modules := ModMap{}
 	const goMod = "go.mod"
 	for _, fname := range goModFilenames {
 		if !strings.HasSuffix(fname, goMod) {
@@ -134,148 +120,31 @@ func parseAllGoModFiles(goModFilenames []string) {
 			continue
 		}
 
-		parseGoModFile(f, location.New(fname))
-	}
-}
-
-// parseGoModFile parses the supplied file and uses the information found to
-// populate the map of moduleInfo
-func parseGoModFile(f io.Reader, loc *location.L) {
-	spacePattern := regexp.MustCompile("[ \t]+")
-
-	scanner := bufio.NewScanner(f)
-	var mi *ModInfo
-	var inReqBlock bool
-	for scanner.Scan() {
-		loc.Incr()
-		line := scanner.Text()
-		switch line {
-		case "":
-			continue
-		case "require (":
-			inReqBlock = true
-			continue
-		case ")":
-			inReqBlock = false
+		mi := parseGoModFile(modules, f, location.New(fname))
+		if mi == nil {
+			fmt.Fprintf(os.Stderr, "Error: No module defined in: %q\n", fname)
 			continue
 		}
-
-		parts := spacePattern.Split(line, -1)
-		switch parts[0] {
-		case "module":
-			loc.SetContent(line)
-			mi = getModuleInfo(parts, loc)
-			if mi == nil {
-				break
-			}
-		case "":
-			if inReqBlock {
-				loc.SetContent(line)
-				populateRequirements(mi, parts, loc)
-			}
-		case "require":
-			loc.SetContent(line)
-			populateRequirements(mi, parts, loc)
-		}
 	}
-	initLevel(mi, loc)
-}
-
-// initLevel sets the initial level of the module. It reports an error if
-// there is no module (if the pointer is nil)
-func initLevel(mi *ModInfo, loc *location.L) {
-	if mi == nil {
-		fmt.Fprintf(os.Stderr,
-			"Error: there is no module defined in file: %s\n", loc.Source())
-		return
-	}
-
-	if len(mi.Reqs) > 0 {
-		mi.Level = 1
-	}
-}
-
-// populateRequirements expects to be passed a non-nil ModInfo and the parts
-// of a require line. It will find the corresponding module for the required
-// module and record that as a requirement of the module and also record that
-// this module requires the other module. If there is a problem it will
-// report it and return false, otherwise it returns true.
-func populateRequirements(mi *ModInfo, parts []string, loc *location.L) bool {
-	if mi == nil {
-		fmt.Fprintf(os.Stderr, "Error: no module is defined at %s\n", loc)
-		fmt.Fprintf(os.Stderr, "     : the module should be known\n")
-		fmt.Fprintf(os.Stderr, "     : before requirements are stated\n")
-		return false
-	}
-
-	if len(parts) < 2 {
-		fmt.Fprintf(os.Stderr, "Error: there is no module name at %s\n", loc)
-		fmt.Fprintf(os.Stderr, "     : too few parts\n")
-		fmt.Fprintf(os.Stderr, "     : a required module name was expected\n")
-		return false
-	}
-
-	r := parts[1]
-	reqdMI, ok := modules[r]
-	if !ok {
-		reqdMI = &ModInfo{
-			Name: r,
-		}
-		modules[r] = reqdMI
-	}
-	reqdMI.ReqdBy = append(reqdMI.ReqdBy, mi)
-	mi.Reqs = append(mi.Reqs, reqdMI)
-
-	return true
-}
-
-// getModuleInfo gets the module info for the named module. It will return
-// nil if the module has already been defined (if it's seen a line starting
-// with the word "module")
-func getModuleInfo(parts []string, loc *location.L) *ModInfo {
-	if len(parts) < 2 {
-		fmt.Fprintf(os.Stderr, "Error: there is no module name at %s\n", loc)
-		fmt.Fprintf(os.Stderr, "     : too few parts\n")
-		fmt.Fprintf(os.Stderr, "     : a module name was expected\n")
-		return nil
-	}
-
-	modName := parts[1]
-
-	mi, ok := modules[modName]
-	if !ok {
-		mi = &ModInfo{
-			Name: modName,
-			Loc:  loc,
-		}
-		modules[modName] = mi
-		return mi
-	}
-
-	if mi.Loc == nil {
-		mi.Loc = loc
-		return mi
-	}
-
-	fmt.Fprintf(os.Stderr, "Error: module %s has been declared before", modName)
-	fmt.Fprintf(os.Stderr, "     : firstly at %s\n", mi.Loc)
-	fmt.Fprintf(os.Stderr, "     :     now at %s\n", loc)
-
-	return nil
+	return modules
 }
 
 // calcLevels will repeatedly go over the modules resetting the level to be
 // one greater than that of the highest level module which it requires. It
-// keeps on doing this until it has made no further changes.
-func calcLevels() {
+// keeps on doing this until it has made no further changes; this should be
+// sufficient as Go does not permit loops in module requirements but to cope
+// with bugs in module specs we abort if the max level observed is greater
+// than the total number of modules being considered.
+func (modules ModMap) calcLevels() {
 	levelChange := true
-	for levelChange {
+	maxLevel := 0
+	for levelChange && maxLevel <= len(modules) {
 		levelChange = false
 		for _, mi := range modules {
-			for _, rmi := range mi.Reqs {
-				if rmi.Level >= mi.Level {
-					mi.Level = rmi.Level + 1
-					levelChange = true
+			if mi.calcLevel() {
+				levelChange = true
+				if mi.Level > maxLevel {
+					maxLevel = mi.Level
 				}
 			}
 		}
@@ -285,23 +154,14 @@ func calcLevels() {
 // calcReqCount will calculate the number of internal and external
 // requirements for each module. If a required module has no location set
 // then it is taken to be an external requireement.
-func calcReqCount() {
+func (modules ModMap) calcReqCount() {
 	for _, mi := range modules {
-		mi.ReqCountInternal = 0
-		mi.ReqCountExternal = 0
-
-		for _, rmi := range mi.Reqs {
-			if rmi.Loc == nil {
-				mi.ReqCountExternal++
-			} else {
-				mi.ReqCountInternal++
-			}
-		}
+		mi.setReqCounts()
 	}
 }
 
 // findMaxNameLen returns the length of the longest module name
-func findMaxNameLen() int {
+func (modules ModMap) findMaxNameLen() int {
 	max := 0
 	for _, mi := range modules {
 		if len(mi.Name) > max {
@@ -314,7 +174,7 @@ func findMaxNameLen() int {
 // makeModInfoSlice returns the modules map as a slice of ModInfo
 // pointers. The slice will be sorted according to the value of the sort
 // parameter
-func makeModInfoSlice(order string) []*ModInfo {
+func (modules ModMap) makeModInfoSlice(order string) []*ModInfo {
 	ms := make([]*ModInfo, 0, len(modules))
 	for _, mi := range modules {
 		ms = append(ms, mi)
@@ -363,14 +223,14 @@ func makeHeader() (*col.Header, error) {
 
 // makeReport constructs the report and returns it with an error. If the
 // error is not nii the report is invalid
-func makeReport(h *col.Header) *col.Report {
+func (modules ModMap) makeReport(h *col.Header) *col.Report {
 	cols := make([]*col.Col, 0, len(columnsToShow))
 
 	if columnsToShow[ColLevel] {
 		cols = append(cols, col.New(colfmt.Int{W: 3}, "Level"))
 	}
 	cols = append(cols,
-		col.New(colfmt.String{W: findMaxNameLen()}, "Module name"))
+		col.New(colfmt.String{W: modules.findMaxNameLen()}, "Module name"))
 	if columnsToShow[ColUseCount] {
 		cols = append(cols, col.New(colfmt.Int{W: 3}, "Count", "Used By"))
 	}
@@ -448,12 +308,12 @@ func addReqsToFilters(mi *ModInfo) {
 
 // expandModFilters takes the initial set of modFilters and adds all the
 // other modules that it is required by.
-func expandModFilters() {
+func (modules ModMap) expandModFilters() {
 	if len(modFilter) == 0 {
 		return
 	}
 
-	for _, mi := range makeModInfoSlice(ColLevel) {
+	for _, mi := range modules.makeModInfoSlice(ColLevel) {
 		if modFilter[mi.Name] {
 			addReqsToFilters(mi)
 		}
@@ -463,7 +323,7 @@ func expandModFilters() {
 // skipModInfo returns true if the module info record should be skipped. It
 // will be skippped if:
 //
-// The location has not been filled in (if its an external module).
+// The location has not been filled in (its an external module).
 //
 // There is a module filter and the name does not match an entry in the
 // filters map.
@@ -536,16 +396,16 @@ func reportExtraUsedByValues(rpt *col.Report, skip uint,
 }
 
 // reportModuleInfo prints the module information
-func reportModuleInfo() {
+func (modules ModMap) reportModuleInfo() {
 	h, err := makeHeader()
 	if err != nil {
 		fmt.Println("Couldn't make the report header:", err)
 		return
 	}
-	rpt := makeReport(h)
+	rpt := modules.makeReport(h)
 
 	lastLevel := -1
-	for _, mi := range makeModInfoSlice(sortBy) {
+	for _, mi := range modules.makeModInfoSlice(sortBy) {
 		if skipModInfo(mi) {
 			continue
 		}
