@@ -10,7 +10,7 @@ require (
 	github.com/nickwells/location.mod v1.2.23
 	github.com/nickwells/param.mod/v5 v5.15.3
 	github.com/nickwells/twrap.mod v1.4.19
-	github.com/nickwells/versionparams.mod v1.1.3
+	github.com/nickwells/versionparams.mod v1.1.4
 	github.com/nickwells/xdg.mod v1.0.9
 )
 

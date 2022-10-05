@@ -28,8 +28,8 @@ github.com/nickwells/testhelper.mod v1.16.0 h1:uh6CATjMyw/ASPdIrF2e4yTfWGYzJHK6R
 github.com/nickwells/testhelper.mod/v2 v2.0.2 h1:IwnjeZQIPwEXY6P8aGn1NXMXoOwe4lsn3bZmqguleus=
 github.com/nickwells/twrap.mod v1.4.19 h1:t0MwdTaFIlmb6nvA/XH8JGWLVUqb+6z3SYH8ePMsdnA=
 github.com/nickwells/twrap.mod v1.4.19/go.mod h1:aM4KIDM0XMLiwekh+2Ee62s+LWXuTq4U3SQ1wQzHh8g=
-github.com/nickwells/versionparams.mod v1.1.3 h1:pM4if1+2ObZ9aQRt9/MLm+8UWCRkIbiBK1BCfkPcNYg=
-github.com/nickwells/versionparams.mod v1.1.3/go.mod h1:uRjqWXfjYyXqcRVus3ZUc07bMySzLGztR11z42v1jOg=
+github.com/nickwells/versionparams.mod v1.1.4 h1:A0GR6UtTvLIYKLcjHvrC0ESp+BmiZ3GzBLgbjMcJU04=
+github.com/nickwells/versionparams.mod v1.1.4/go.mod h1:ynvgU2AflH43OoQ5spSqxYsjhCOynu+vPZS2hin6Sr8=
 github.com/nickwells/xdg.mod v1.0.9 h1:IQhytP6QBCC2xrSVXTE0GDbYJSD8E25H6sSqd7jtCHA=
 github.com/nickwells/xdg.mod v1.0.9/go.mod h1:WbQC4EaiIUSCgzmgYCqGq1zhYnWDe+pBODhx8HzlStM=
 golang.org/x/exp v0.0.0-20221004215720-b9f4876ce741 h1:fGZugkZk2UgYBxtpKmvub51Yno1LJDeEsRp2xGD+0gY=
