@@ -35,7 +35,8 @@ func main() {
 			"By default any report will be preceded with a description of"+
 			" what the various columns mean."+
 			"\n\n"+
-			"If one of the trailiing arguments does not end with '/go.mod'"+
+			"If a trailing argument does not end with "+
+			"'"+string(os.PathSeparator)+"go.mod'"+
 			" then it is taken as a directory name and the missing"+
 			" filename is automatically appended."),
 	)
@@ -71,6 +72,7 @@ func parseAllGoModFiles(goModFilenames []string) ModMap {
 			fmt.Fprintf(os.Stderr, "Error: No module defined in: %q\n", fname)
 			continue
 		}
+		mi.getPackageInfo(filepath.Dir(fname))
 	}
 	return modules
 }

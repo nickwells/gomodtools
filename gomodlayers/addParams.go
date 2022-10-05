@@ -89,6 +89,9 @@ func addParams(ps *param.PSet) error {
 					" of other modules in the collection",
 				ColUsesCountExt: "how much use the module makes" +
 					" of modules not in the collection",
+				ColPackages: "how many packages does this module provide",
+				ColPkgLines: "how many lines of code the module" +
+					" packages provide",
 			},
 			Aliases: psetter.Aliases{
 				"all": {
@@ -97,6 +100,8 @@ func addParams(ps *param.PSet) error {
 					ColUsedBy,
 					ColUsesCountExt,
 					ColUsesCountInt,
+					ColPackages,
+					ColPkgLines,
 				},
 			},
 			AllowHiddenMapEntries: true,

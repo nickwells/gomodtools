@@ -11,9 +11,8 @@ module\.
 By default any report will be preceded with a description of what the various
 columns mean\.
 
-If one of the trailiing arguments does not end with &apos;/go\.mod&apos; then it
-is taken as a directory name and the missing filename is automatically
-appended\.
+If a trailing argument does not end with &apos;/go\.mod&apos; then it is taken
+as a directory name and the missing filename is automatically appended\.
 
 
 

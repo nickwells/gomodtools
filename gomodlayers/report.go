@@ -17,6 +17,8 @@ const (
 	ColUsedBy       = "used-by"
 	ColUsesCountInt = "uses-count-int"
 	ColUsesCountExt = "uses-count-ext"
+	ColPackages     = "packages"
+	ColPkgLines     = "lines-of-code"
 )
 
 var columnsToShow = map[string]bool{
@@ -44,11 +46,20 @@ var helpTxt = "The level value indicates that the module requires modules" +
 	" high use count means if you change this module, you'll have to" +
 	" update the go.mod file of many other modules." +
 	"\n\n" +
+	"The used-by columns shows which other modules require this module." +
+	"\n\n" +
 	"The uses count (internal) indicates how many other modules from" +
 	" this collection this module requires." +
 	"\n\n" +
 	"The uses count (external) indicates how many modules from outside" +
 	" this collection this module requires." +
+	"\n\n" +
+	"The packages count shows how many directories with Go source code" +
+	" there are in the module. This may be 'main' packages (generating" +
+	" executable binaries)." +
+	"\n\n" +
+	"The package lines of code shows how many non-test lines there are" +
+	" in the packages." +
 	"\n\n" +
 	"This allows you to make judgements about changes you are making." +
 	" For instance, if you are changing a module at level 3," +
@@ -103,9 +114,16 @@ func (modules ModMap) makeReport(h *col.Header) *col.Report {
 	if columnsToShow[ColUsesCountExt] {
 		cols = append(cols, col.New(colfmt.Int{W: 3}, "Count", "Uses (ext)"))
 	}
+	if columnsToShow[ColPackages] {
+		cols = append(cols, col.New(colfmt.Int{W: 3}, "Count", "Packages"))
+	}
+	if columnsToShow[ColPkgLines] {
+		cols = append(cols, col.New(colfmt.Int{W: 7}, "Package", "LoC"))
+	}
 	if columnsToShow[ColUsedBy] {
 		cols = append(cols, col.New(colfmt.String{}, "Used By"))
 	}
+
 	if len(cols) == 1 {
 		return col.NewReport(h, os.Stdout, cols[0])
 	}
@@ -161,6 +179,31 @@ func addUsesCountExtCol(mi *ModInfo, colVals []any) []any {
 	return colVals
 }
 
+// addPackagesCol adds the number of packages provided column value to the
+// colVals and returns the new colVals
+func addPackagesCol(mi *ModInfo, colVals []any) []any {
+	if columnsToShow[ColPackages] {
+		colVals = append(colVals, len(mi.Packages))
+	}
+	return colVals
+}
+
+// addPackagesLoCCol adds the number of lines of package code column value to
+// the colVals and returns the new colVals. Note that only non-test files are
+// counted.
+func addPackagesLoCCol(mi *ModInfo, colVals []any) []any {
+	if columnsToShow[ColPackages] {
+		linesOfCode := 0
+		for _, pkg := range mi.Packages {
+			for _, gi := range pkg.Files {
+				linesOfCode += gi.LineCount
+			}
+		}
+		colVals = append(colVals, linesOfCode)
+	}
+	return colVals
+}
+
 // addReqsToFilters will add all the ReqdBy entries for the module into the
 // filter map.
 func addReqsToFilters(mi *ModInfo) {
@@ -211,6 +254,8 @@ func printModInfo(rpt *col.Report, mi *ModInfo, lastLevel int) error {
 	vals = addUseCountCol(mi, vals)
 	vals = addUsesCountIntCol(mi, vals)
 	vals = addUsesCountExtCol(mi, vals)
+	vals = addPackagesCol(mi, vals)
+	vals = addPackagesLoCCol(mi, vals)
 	var skipCountExtras uint
 	if canSkipCols {
 		skipCountExtras = uint(len(vals))
