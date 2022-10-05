@@ -3,10 +3,17 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"go/ast"
+	"go/parser"
+	"go/token"
 	"io"
 	"os"
+	"path/filepath"
 	"regexp"
+	"strings"
 
+	"github.com/nickwells/check.mod/v2/check"
+	"github.com/nickwells/dirsearch.mod/v2/dirsearch"
 	"github.com/nickwells/location.mod/location"
 )
 
@@ -19,6 +26,16 @@ type ModInfo struct {
 	ReqCountExternal int
 	Level            int
 	ReqdBy           []*ModInfo
+	Packages         map[string]*PkgInfo
+}
+
+// NewModInfo creates a new ModInfo with the name populated and the Packages
+// map initialised.
+func NewModInfo(name string) *ModInfo {
+	return &ModInfo{
+		Name:     name,
+		Packages: map[string]*PkgInfo{},
+	}
 }
 
 type ModMap map[string]*ModInfo
@@ -82,10 +99,9 @@ func getModuleInfo(modules ModMap, parts []string, loc *location.L) *ModInfo {
 
 	mi, ok := modules[modName]
 	if !ok { // a new module so create it and add it to the map
-		mi = &ModInfo{
-			Name: modName,
-			Loc:  loc,
-		}
+		mi = NewModInfo(modName)
+		mi.Loc = loc
+
 		modules[modName] = mi
 		return mi
 	}
@@ -126,9 +142,7 @@ func (mi *ModInfo) addReqs(modules ModMap, parts []string, loc *location.L) {
 	r := parts[1]
 	reqdMI, ok := modules[r]
 	if !ok { // the required module is not yet known, so create a new one
-		reqdMI = &ModInfo{
-			Name: r,
-		}
+		reqdMI = NewModInfo(r)
 		modules[r] = reqdMI
 	}
 	reqdMI.ReqdBy = append(reqdMI.ReqdBy, mi)
@@ -161,4 +175,92 @@ func (mi *ModInfo) setReqCounts() {
 			mi.ReqCountInternal++
 		}
 	}
+}
+
+// getPackageInfo will walk the directory tree from the directory given and
+// will gather statistics about the packages found.
+func (mi *ModInfo) getPackageInfo(dirName string) {
+	dirName = filepath.Clean(dirName)
+
+	fMap, errs := dirsearch.FindRecursePrune(dirName, -1,
+		[]check.FileInfo{
+			check.FileInfoName(
+				check.Not(check.StringHasPrefix[string]("."), "hidden")),
+			check.FileInfoName(
+				check.Not(check.ValEQ("testdata"), "testdata")),
+		},
+		check.FileInfoName(check.StringHasSuffix[string](".go")))
+
+	if len(errs) != 0 {
+		fmt.Println("Errors found while finding the package Go files")
+		for _, err := range errs {
+			fmt.Println("\t", err)
+		}
+		return
+	}
+
+	fileSet := token.NewFileSet()
+	for fName := range fMap {
+		info, err := parser.ParseFile(fileSet, fName, nil, 0)
+		if err != nil {
+			fmt.Println("\t", err)
+			continue
+		}
+		importName := filepath.Clean(
+			mi.Name +
+				filepath.Dir(
+					strings.TrimPrefix(fName, dirName)))
+
+		pName := info.Name.Name
+		basePName := strings.TrimSuffix(pName, "_test")
+
+		pkg, ok := mi.Packages[importName]
+		if !ok {
+			pkg = &PkgInfo{
+				Name:       basePName,
+				ImportName: importName,
+			}
+			mi.Packages[importName] = pkg
+		}
+		gi := getGoInfo(fileSet, info)
+		if strings.HasSuffix(fName, "_test.go") {
+			pkg.TestFiles = append(pkg.TestFiles, gi)
+			if pName == basePName {
+				pkg.HasTestsInt = true
+			} else {
+				pkg.HasTestsAPI = true
+			}
+		} else {
+			pkg.Files = append(pkg.Files, gi)
+		}
+	}
+}
+
+// GoInfo records Go information about a file
+type GoInfo struct {
+	FileName  string
+	LineCount int
+	Info      *ast.File
+}
+
+// PkgInfo records aggregate package information
+type PkgInfo struct {
+	Name        string
+	ImportName  string
+	Files       []GoInfo
+	TestFiles   []GoInfo
+	HasTestsInt bool
+	HasTestsAPI bool
+}
+
+// getGoInfo finds Go information from the Go File
+func getGoInfo(fileSet *token.FileSet, info *ast.File) GoInfo {
+	file := fileSet.File(info.Pos())
+	gi := GoInfo{
+		FileName:  file.Name(),
+		LineCount: file.LineCount(),
+		Info:      info,
+	}
+
+	return gi
 }
