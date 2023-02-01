@@ -103,11 +103,12 @@ func addParams(ps *param.PSet) error {
 					ColPackages,
 					ColPkgLines,
 				},
+				"lines": {ColPkgLines},
 			},
 			AllowHiddenMapEntries: true,
 		},
 		"what columns should be shown (note that the name is always shown)",
-		param.AltNames("show", "cols"),
+		param.AltNames("show", "cols", "col"),
 	)
 
 	ps.Add(paramNamesByLevel, psetter.Nil{},
