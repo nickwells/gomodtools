@@ -192,7 +192,7 @@ func addPackagesCol(mi *ModInfo, colVals []any) []any {
 // the colVals and returns the new colVals. Note that only non-test files are
 // counted.
 func addPackagesLoCCol(mi *ModInfo, colVals []any) []any {
-	if columnsToShow[ColPackages] {
+	if columnsToShow[ColPkgLines] {
 		linesOfCode := 0
 		for _, pkg := range mi.Packages {
 			for _, gi := range pkg.Files {
@@ -240,15 +240,16 @@ func skipModInfo(mi *ModInfo) bool {
 // For the first row of each module this is all that is skipped but for
 // subsequent rows all the columns up to the UsedBy column are skipped
 func printModInfo(rpt *col.Report, mi *ModInfo, lastLevel int) error {
-	vals := make([]any, 0, len(columnsToShow))
+	vals := make([]any, 0, len(columnsToShow)+1)
 	var skipCount uint
-	if lastLevel == mi.Level &&
-		hideDupLevels &&
-		columnsToShow[ColLevel] &&
-		canSkipCols {
-		skipCount = 1
-	} else {
-		vals = addLevelCol(mi, vals)
+	if columnsToShow[ColLevel] {
+		if lastLevel == mi.Level &&
+			hideDupLevels &&
+			canSkipCols {
+			skipCount = 1
+		} else {
+			vals = addLevelCol(mi, vals)
+		}
 	}
 	vals = append(vals, mi.Name)
 	vals = addUseCountCol(mi, vals)
