@@ -182,13 +182,21 @@ func (mi *ModInfo) setReqCounts() {
 func (mi *ModInfo) getPackageInfo(dirName string) {
 	dirName = filepath.Clean(dirName)
 
+	// Note that Go ignores files and directories whose name begins with '.'
+	// or '_' and directories named testdata
 	fMap, errs := dirsearch.FindRecursePrune(dirName, -1,
 		[]check.FileInfo{
 			check.FileInfoName(
 				check.Not(check.StringHasPrefix[string]("."), "hidden")),
 			check.FileInfoName(
+				check.Not(check.StringHasPrefix[string]("_"), "hidden")),
+			check.FileInfoName(
 				check.Not(check.ValEQ("testdata"), "testdata")),
 		},
+		check.FileInfoName(
+			check.Not(check.StringHasPrefix[string]("."), "hidden")),
+		check.FileInfoName(
+			check.Not(check.StringHasPrefix[string]("_"), "hidden")),
 		check.FileInfoName(check.StringHasSuffix[string](".go")))
 
 	if len(errs) != 0 {
