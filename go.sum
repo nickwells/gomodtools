@@ -18,8 +18,8 @@ github.com/nickwells/mathutil.mod/v2 v2.2.1 h1:mMZz1JjsUsq0Ctds4Qa/bbfDFh0pjoeI0
 github.com/nickwells/mathutil.mod/v2 v2.2.1/go.mod h1:7boYOp2rBhN5owQS8QIHC1e1e+Ye8EGvmWiGN5X1Vss=
 github.com/nickwells/pager.mod v1.0.11 h1:actfWhNh1TPtRpMPwJcRvYeuL2iRd+JQ44l+4KKsoJg=
 github.com/nickwells/pager.mod v1.0.11/go.mod h1:rRmwJHKd/xaSpi/xqJv7P7IJUtFeoJ9s/8yoJ+mh+tM=
-github.com/nickwells/param.mod/v5 v5.16.2 h1:6cffBnAr9j3Kaq6QRH4qBiJJR8Lnx3DPbV08brKETdM=
-github.com/nickwells/param.mod/v5 v5.16.2/go.mod h1:XhAC54+omNEqotWW6kOP89Jec4ss3vntX19M+MOn6wE=
+github.com/nickwells/param.mod/v5 v5.18.0 h1:1Jd+92pduO0/qeAGL3w/PXav541G6IZAvFq5+btePRs=
+github.com/nickwells/param.mod/v5 v5.18.0/go.mod h1:XhAC54+omNEqotWW6kOP89Jec4ss3vntX19M+MOn6wE=
 github.com/nickwells/strdist.mod v1.1.11 h1:pD5g6sHEyLR/89MYjYRAc6cXHZ4f7INqSkahXbzSnNE=
 github.com/nickwells/strdist.mod v1.1.11/go.mod h1:iGZOBFjm6NWa86LVX0jodI89n/fQvPBYrFghfvZ1zHs=
 github.com/nickwells/tempus.mod v1.0.2 h1:GzlgNdgp9S0tB1txuB+GKd2leOThl5AKC1Ab9RU39as=
@@ -28,8 +28,8 @@ github.com/nickwells/testhelper.mod v1.16.0 h1:uh6CATjMyw/ASPdIrF2e4yTfWGYzJHK6R
 github.com/nickwells/testhelper.mod/v2 v2.2.0 h1:ERFE5p5xwigQ2WiZ5P/co+FTsZY7v3Yu/gVRqAGTbq4=
 github.com/nickwells/twrap.mod v1.5.2 h1:Kk8Ri+0TI151yC+5hcwdTCMrxxa4OHGf7PILbTH2wBs=
 github.com/nickwells/twrap.mod v1.5.2/go.mod h1:oobGzdKpMpBghGZ8zkrmNOheX/GPhgT1qmnKkJTfTxE=
-github.com/nickwells/versionparams.mod v1.1.14 h1:ONx5P7frU3eLQh2snp6PvbI0xER3+hh8IXUBvYmCw7o=
-github.com/nickwells/versionparams.mod v1.1.14/go.mod h1:PAQJ0tRtLAxx52ICfCNIZwdkn2qDX9fs05iOsd0F474=
+github.com/nickwells/versionparams.mod v1.1.15 h1:p8sdTSZXx84MAmAanr0+j3j7BlyJubgbKN5s4zhZl2A=
+github.com/nickwells/versionparams.mod v1.1.15/go.mod h1:vinCTyb259v8djEDaK/DtzuJtsMH8iQg4N1Nex5Zcy4=
 github.com/nickwells/xdg.mod v1.0.9 h1:IQhytP6QBCC2xrSVXTE0GDbYJSD8E25H6sSqd7jtCHA=
 github.com/nickwells/xdg.mod v1.0.9/go.mod h1:WbQC4EaiIUSCgzmgYCqGq1zhYnWDe+pBODhx8HzlStM=
 golang.org/x/exp v0.0.0-20230522175609-2e198f4a06a1 h1:k/i9J1pBpvlfR+9QsetwPyERsqu1GIbi967PQMq3Ivc=
