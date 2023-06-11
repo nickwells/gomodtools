@@ -10,44 +10,52 @@ import (
 	"strings"
 
 	"github.com/nickwells/location.mod/location"
-	"github.com/nickwells/param.mod/v5/param"
-	"github.com/nickwells/param.mod/v5/param/paramset"
-	"github.com/nickwells/versionparams.mod/versionparams"
 )
 
 // Created: Thu Mar 28 12:13:29 2019
 
+// Prog holds program parameters and status
+type Prog struct {
+	hideDupLevels bool
+	canSkipCols   bool
+	showIntro     bool
+	showHeader    bool
+
+	sortBy string
+
+	modFilter     map[string]bool
+	columnsToShow map[string]bool
+}
+
+// NewProg returns a new Prog instance with the default values set
+func NewProg() *Prog {
+	return &Prog{
+		canSkipCols: true,
+		showIntro:   true,
+		showHeader:  true,
+
+		sortBy: ColLevel,
+
+		modFilter: map[string]bool{},
+		columnsToShow: map[string]bool{
+			ColLevel:    true,
+			ColName:     true,
+			ColUseCount: true,
+		},
+	}
+}
+
 func main() {
-	ps := paramset.NewOrDie(
-		versionparams.AddParams,
-		addParams,
-		addExamples,
-		SetGlobalConfigFile,
-		SetConfigFile,
-		param.SetProgramDescription("This will take a list of go.mod"+
-			" files (or directories) as trailing arguments"+
-			" (after '"+param.DfltTerminalParam+"'), parse them and print"+
-			" a report. The report will show how they relate to one"+
-			" another with regards to dependencies and can print them in"+
-			" such an order that an earlier module does not depend on any"+
-			" subsequent module."+
-			"\n\n"+
-			"By default any report will be preceded with a description of"+
-			" what the various columns mean."+
-			"\n\n"+
-			"If a trailing argument does not end with "+
-			"'"+string(os.PathSeparator)+"go.mod'"+
-			" then it is taken as a directory name and the missing"+
-			" filename is automatically appended."),
-	)
+	prog := NewProg()
+	ps := makeParamSet(prog)
 
 	ps.Parse()
 
 	modules := parseAllGoModFiles(ps.Remainder())
 	modules.calcLevels()
 	modules.calcReqCount()
-	modules.expandModFilters()
-	modules.reportModuleInfo()
+	modules.expandModFilters(prog)
+	modules.reportModuleInfo(prog)
 }
 
 // parseAllGoModFiles will process the list of filenames, opening each one in
@@ -147,14 +155,14 @@ func (modules ModMap) makeModInfoSlice(order string) []*ModInfo {
 
 // expandModFilters takes the initial set of modFilters and adds all the
 // other modules that it is required by.
-func (modules ModMap) expandModFilters() {
-	if len(modFilter) == 0 {
+func (modules ModMap) expandModFilters(prog *Prog) {
+	if len(prog.modFilter) == 0 {
 		return
 	}
 
 	for _, mi := range modules.makeModInfoSlice(ColLevel) {
-		if modFilter[mi.Name] {
-			addReqsToFilters(mi)
+		if prog.modFilter[mi.Name] {
+			prog.addReqsToFilters(mi)
 		}
 	}
 }
