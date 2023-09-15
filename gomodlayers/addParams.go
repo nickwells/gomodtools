@@ -2,9 +2,9 @@ package main
 
 import (
 	"github.com/nickwells/location.mod/location"
-	"github.com/nickwells/param.mod/v5/param"
-	"github.com/nickwells/param.mod/v5/param/paction"
-	"github.com/nickwells/param.mod/v5/param/psetter"
+	"github.com/nickwells/param.mod/v6/paction"
+	"github.com/nickwells/param.mod/v6/param"
+	"github.com/nickwells/param.mod/v6/psetter"
 )
 
 const (
@@ -23,27 +23,33 @@ const (
 // addParams will add parameters to the passed param.PSet
 func addParams(prog *Prog) param.PSetOptFunc {
 	return func(ps *param.PSet) error {
-		ps.Add(paramNamesOnly, psetter.Nil{},
+		ps.Add(paramNamesOnly,
+			psetter.Nil{},
 			"reset the list of columns to only show the module names",
-			param.PostAction(func(_ location.L, _ *param.ByName, _ []string) error {
-				prog.columnsToShow = map[string]bool{
-					ColName: true,
-				}
-				return nil
-			}),
+			param.PostAction(
+				func(_ location.L, _ *param.ByName, _ []string) error {
+					prog.columnsToShow = map[string]bool{
+						ColName: true,
+					}
+					return nil
+				}),
 		)
 
-		ps.Add(paramHideHeader, psetter.Bool{Value: &prog.showHeader, Invert: true},
+		ps.Add(paramHideHeader,
+			psetter.Bool{Value: &prog.showHeader, Invert: true},
 			"suppress the printing of the header",
 			param.AltNames("hide-hdr", "no-hdr"),
 		)
-		ps.Add(paramHideIntro, psetter.Bool{Value: &prog.showIntro, Invert: true},
+		ps.Add(paramHideIntro,
+			psetter.Bool{Value: &prog.showIntro, Invert: true},
 			"suppress the printing of the introductory text"+
 				" explaining the meaning of the report",
 			param.AltNames("no-intro"),
 		)
-		ps.Add(paramBrief, psetter.Nil{},
-			"suppress the printing of both the introductory text and the headers",
+		ps.Add(paramBrief,
+			psetter.Nil{},
+			"suppress the printing of both the introductory text"+
+				" and the headers",
 			param.PostAction(paction.SetVal(&prog.showHeader, false)),
 			param.PostAction(paction.SetVal(&prog.showIntro, false)),
 		)
@@ -53,7 +59,8 @@ func addParams(prog *Prog) param.PSetOptFunc {
 				" is the same as on the previous line",
 		)
 
-		ps.Add(paramNoSkips, psetter.Bool{Value: &prog.canSkipCols, Invert: true},
+		ps.Add(paramNoSkips,
+			psetter.Bool{Value: &prog.canSkipCols, Invert: true},
 			"don't skip the printing of columns where the row"+
 				" value is the same as on the previous line."+
 				" Note that this value overrides"+
@@ -63,16 +70,16 @@ func addParams(prog *Prog) param.PSetOptFunc {
 		)
 
 		ps.Add(paramSortOrder,
-			psetter.Enum{
+			psetter.Enum[string]{
 				Value: &prog.sortBy,
-				AllowedVals: psetter.AllowedVals{
+				AllowedVals: psetter.AllowedVals[string]{
 					ColLevel:    "in level order (lowest first)",
 					ColName:     "in name order",
 					ColUseCount: "in order of how heavily used the module is",
-					ColUsesCountInt: "in order of how much use the module makes" +
-						" of other modules in the collection",
-					ColUsesCountExt: "in order of how much use the module makes" +
-						" of modules not in the collection",
+					ColUsesCountInt: "in order of how much use the module" +
+						" makes of other modules in the collection",
+					ColUsesCountExt: "in order of how much use the module" +
+						" makes of modules not in the collection",
 				},
 			},
 			"what order should the modules be sorted when reporting",
@@ -80,10 +87,11 @@ func addParams(prog *Prog) param.PSetOptFunc {
 		)
 
 		ps.Add(paramShowCols,
-			psetter.EnumMap{
+			psetter.EnumMap[string]{
 				Value: &prog.columnsToShow,
-				AllowedVals: psetter.AllowedVals{
-					ColLevel:    "where the module lies in the dependency order",
+				AllowedVals: psetter.AllowedVals[string]{
+					ColLevel: "where the module lies in the dependency" +
+						" order",
 					ColUseCount: "how heavily used the module is",
 					ColUsedBy:   "the modules that use this",
 					ColUsesCountInt: "how much use the module makes" +
@@ -94,7 +102,7 @@ func addParams(prog *Prog) param.PSetOptFunc {
 					ColPkgLines: "how many lines of code the module" +
 						" packages provide",
 				},
-				Aliases: psetter.Aliases{
+				Aliases: psetter.Aliases[string]{
 					"all": {
 						ColLevel,
 						ColUseCount,
@@ -117,15 +125,17 @@ func addParams(prog *Prog) param.PSetOptFunc {
 			param.PostAction(paction.SetVal(&prog.showHeader, false)),
 			param.PostAction(paction.SetVal(&prog.showIntro, false)),
 			param.PostAction(paction.SetVal(&prog.sortBy, ColLevel)),
-			param.PostAction(func(_ location.L, _ *param.ByName, _ []string) error {
-				prog.columnsToShow = map[string]bool{
-					ColName: true,
-				}
-				return nil
-			}),
+			param.PostAction(
+				func(_ location.L, _ *param.ByName, _ []string) error {
+					prog.columnsToShow = map[string]bool{
+						ColName: true,
+					}
+					return nil
+				}),
 		)
 
-		ps.Add(paramFilter, psetter.Map{Value: &prog.modFilter},
+		ps.Add(paramFilter,
+			psetter.Map[string]{Value: &prog.modFilter},
 			"the module name to filter by."+
 				" The report will only show this module"+
 				" and any module that uses this module."+
