@@ -13,7 +13,7 @@ require (
 	github.com/nickwells/param.mod/v6 v6.0.0
 	github.com/nickwells/testhelper.mod/v2 v2.3.0
 	github.com/nickwells/twrap.mod v1.5.3
-	github.com/nickwells/versionparams.mod v1.1.18
+	github.com/nickwells/versionparams.mod v1.2.0
 	github.com/nickwells/xdg.mod v1.0.9
 )
 
