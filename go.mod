@@ -10,10 +10,10 @@ require (
 	github.com/nickwells/dirsearch.mod/v2 v2.0.12
 	github.com/nickwells/filecheck.mod v1.1.22
 	github.com/nickwells/location.mod v1.2.27
-	github.com/nickwells/param.mod/v6 v6.0.0
+	github.com/nickwells/param.mod/v6 v6.0.1
 	github.com/nickwells/testhelper.mod/v2 v2.3.0
 	github.com/nickwells/twrap.mod v1.5.3
-	github.com/nickwells/versionparams.mod v1.2.0
+	github.com/nickwells/versionparams.mod v1.2.3
 	github.com/nickwells/xdg.mod v1.0.9
 )
 
