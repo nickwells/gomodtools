@@ -10,10 +10,10 @@ require (
 	github.com/nickwells/dirsearch.mod/v2 v2.0.13
 	github.com/nickwells/filecheck.mod v1.1.23
 	github.com/nickwells/location.mod v1.2.27
-	github.com/nickwells/param.mod/v6 v6.1.1
+	github.com/nickwells/param.mod/v6 v6.1.3
 	github.com/nickwells/testhelper.mod/v2 v2.3.0
 	github.com/nickwells/twrap.mod v1.5.4
-	github.com/nickwells/versionparams.mod v1.2.5
+	github.com/nickwells/versionparams.mod v1.2.6
 	github.com/nickwells/xdg.mod v1.0.9
 )
 
@@ -26,7 +26,7 @@ require (
 	github.com/nickwells/mathutil.mod/v2 v2.3.0 // indirect
 	github.com/nickwells/pager.mod v1.0.11 // indirect
 	github.com/nickwells/strdist.mod v1.1.13 // indirect
-	golang.org/x/exp v0.0.0-20230905200255-921286631fa9 // indirect
-	golang.org/x/sys v0.12.0 // indirect
-	golang.org/x/term v0.12.0 // indirect
+	golang.org/x/exp v0.0.0-20231006140011-7918f672742d // indirect
+	golang.org/x/sys v0.13.0 // indirect
+	golang.org/x/term v0.13.0 // indirect
 )
