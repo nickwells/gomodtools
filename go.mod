@@ -6,7 +6,6 @@ toolchain go1.21.0
 
 require (
 	github.com/nickwells/check.mod/v2 v2.1.14
-	github.com/nickwells/col.mod/v3 v3.1.0
 	github.com/nickwells/dirsearch.mod/v2 v2.0.14
 	github.com/nickwells/filecheck.mod v1.2.0
 	github.com/nickwells/location.mod v1.2.27
@@ -18,7 +17,7 @@ require (
 )
 
 require (
-	github.com/nickwells/col.mod/v4 v4.0.0 // indirect
+	github.com/nickwells/col.mod/v4 v4.0.0
 	github.com/nickwells/strdist.mod/v2 v2.0.0 // indirect
 	github.com/nickwells/tempus.mod v1.2.0 // indirect
 )

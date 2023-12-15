@@ -5,8 +5,8 @@ import (
 	"io"
 	"os"
 
-	"github.com/nickwells/col.mod/v3/col"
-	"github.com/nickwells/col.mod/v3/col/colfmt"
+	"github.com/nickwells/col.mod/v4/col"
+	"github.com/nickwells/col.mod/v4/colfmt"
 	"github.com/nickwells/twrap.mod/twrap"
 )
 
@@ -109,9 +109,9 @@ func (modules ModMap) makeReport(h *col.Header, prog *Prog) *col.Report {
 	}
 
 	if len(cols) == 1 {
-		return col.NewReport(h, os.Stdout, cols[0])
+		return col.NewReportOrPanic(h, os.Stdout, cols[0])
 	}
-	return col.NewReport(h, os.Stdout, cols[0], cols[1:]...)
+	return col.NewReportOrPanic(h, os.Stdout, cols[0], cols[1:]...)
 }
 
 // addLevelCol adds the level column value to the colVals and returns the new
