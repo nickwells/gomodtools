@@ -1,20 +1,19 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 	"go/ast"
 	"go/parser"
 	"go/token"
-	"io"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 
 	"github.com/nickwells/check.mod/v2/check"
 	"github.com/nickwells/dirsearch.mod/v2/dirsearch"
 	"github.com/nickwells/location.mod/location"
+
+	"golang.org/x/mod/modfile"
 )
 
 // ModInfo records information gleaned from the go.mod files
@@ -42,61 +41,27 @@ type ModMap map[string]*ModInfo
 
 // parseGoModFile parses the supplied file and uses the information found to
 // populate the map of moduleInfo
-func parseGoModFile(modules ModMap, f io.Reader, loc *location.L) *ModInfo {
-	spacePattern := regexp.MustCompile("[ \t]+")
+func parseGoModFile(modules ModMap, contents []byte, loc *location.L) (
+	*ModInfo, error,
+) {
+	modFile, err := modfile.Parse(loc.Source(), contents, nil)
 
-	scanner := bufio.NewScanner(f)
-	var mi *ModInfo
-	var inReqBlock bool
-
-	for scanner.Scan() {
-		loc.Incr()
-		line := scanner.Text()
-		switch line {
-		case "":
-			continue
-		case "require (":
-			inReqBlock = true
-			continue
-		case ")":
-			inReqBlock = false
-			continue
-		}
-
-		loc.SetContent(line)
-
-		parts := spacePattern.Split(line, -1)
-		switch parts[0] {
-		case "module":
-			mi = getModuleInfo(modules, parts, loc)
-			if mi == nil {
-				break
-			}
-		case "":
-			if inReqBlock {
-				mi.addReqs(modules, parts, loc)
-			}
-		case "require":
-			mi.addReqs(modules, parts, loc)
-		}
+	if err != nil {
+		return nil, err
 	}
 
-	return mi
+	mi := getModuleInfo(modules, modFile.Module.Mod.Path, loc)
+
+	for _, m := range modFile.Require {
+		mi.addReqs(modules, m.Mod.Path, loc)
+	}
+	return mi, nil
 }
 
 // getModuleInfo gets the module info for the named module. It will return
 // nil if the module has already been defined (if it's seen a line starting
 // with the word "module")
-func getModuleInfo(modules ModMap, parts []string, loc *location.L) *ModInfo {
-	if len(parts) < 2 {
-		fmt.Fprintf(os.Stderr, "Error: there is no module name at %s\n", loc)
-		fmt.Fprintf(os.Stderr, "     : there are too few parts\n")
-		fmt.Fprintf(os.Stderr, "     : a module name was expected\n")
-		return nil
-	}
-
-	modName := parts[1]
-
+func getModuleInfo(modules ModMap, modName string, loc *location.L) *ModInfo {
 	mi, ok := modules[modName]
 	if !ok { // a new module so create it and add it to the map
 		mi = NewModInfo(modName)
@@ -124,26 +89,11 @@ func getModuleInfo(modules ModMap, parts []string, loc *location.L) *ModInfo {
 // module and record that as a requirement of the module and also record that
 // this module requires the other module. If there is a problem it will
 // report it .
-func (mi *ModInfo) addReqs(modules ModMap, parts []string, loc *location.L) {
-	if mi == nil {
-		fmt.Fprintf(os.Stderr, "Error: no module is defined at %s\n", loc)
-		fmt.Fprintf(os.Stderr, "     : the module should be known\n")
-		fmt.Fprintf(os.Stderr, "     : before requirements are stated\n")
-		return
-	}
-
-	if len(parts) < 2 {
-		fmt.Fprintf(os.Stderr, "Error: there is no module name at %s\n", loc)
-		fmt.Fprintf(os.Stderr, "     : there are too few parts\n")
-		fmt.Fprintf(os.Stderr, "     : a required module name was expected\n")
-		return
-	}
-
-	r := parts[1]
-	reqdMI, ok := modules[r]
+func (mi *ModInfo) addReqs(modules ModMap, requires string, loc *location.L) {
+	reqdMI, ok := modules[requires]
 	if !ok { // the required module is not yet known, so create a new one
-		reqdMI = NewModInfo(r)
-		modules[r] = reqdMI
+		reqdMI = NewModInfo(requires)
+		modules[requires] = reqdMI
 	}
 	reqdMI.ReqdBy = append(reqdMI.ReqdBy, mi)
 	mi.Reqs = append(mi.Reqs, reqdMI)

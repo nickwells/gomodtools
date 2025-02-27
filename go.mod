@@ -12,6 +12,7 @@ require (
 	github.com/nickwells/twrap.mod v1.5.4
 	github.com/nickwells/versionparams.mod v1.2.9
 	github.com/nickwells/xdg.mod v1.0.9
+	golang.org/x/mod v0.14.0
 )
 
 require (

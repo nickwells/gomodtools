@@ -63,25 +63,30 @@ func main() {
 // go.mod then that is added to the end of the path before further processing
 func parseAllGoModFiles(goModFilenames []string) ModMap {
 	modules := ModMap{}
+
 	const goMod = "go.mod"
+
 	for _, fname := range goModFilenames {
 		if !strings.HasSuffix(fname, goMod) {
 			fname = filepath.Join(fname, goMod)
 		}
 
-		f, err := os.Open(fname)
+		contents, err := os.ReadFile(fname)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			continue
 		}
 
-		mi := parseGoModFile(modules, f, location.New(fname))
-		if mi == nil {
-			fmt.Fprintf(os.Stderr, "Error: No module defined in: %q\n", fname)
+		mi, err := parseGoModFile(modules, contents, location.New(fname))
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error: No module defined in: %q: %s\n",
+				fname, err)
 			continue
 		}
+
 		mi.getPackageInfo(filepath.Dir(fname))
 	}
+
 	return modules
 }
 
@@ -118,13 +123,13 @@ func (modules ModMap) calcReqCount() {
 
 // findMaxNameLen returns the length of the longest module name
 func (modules ModMap) findMaxNameLen() uint {
-	max := 0
+	l := 0
 	for _, mi := range modules {
-		if len(mi.Name) > max {
-			max = len(mi.Name)
+		if len(mi.Name) > l {
+			l = len(mi.Name)
 		}
 	}
-	return uint(max)
+	return uint(l) //nolint:gosec
 }
 
 // makeModInfoSlice returns the modules map as a slice of ModInfo
