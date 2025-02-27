@@ -31,6 +31,7 @@ func addParams(prog *Prog) param.PSetOptFunc {
 					prog.columnsToShow = map[string]bool{
 						ColName: true,
 					}
+
 					return nil
 				}),
 		)
@@ -131,6 +132,7 @@ func addParams(prog *Prog) param.PSetOptFunc {
 					prog.columnsToShow = map[string]bool{
 						ColName: true,
 					}
+
 					return nil
 				}),
 		)

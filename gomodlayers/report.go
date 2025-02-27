@@ -26,7 +26,9 @@ func printReportIntro(w io.Writer, n uint64) {
 	if n != 0 {
 		return
 	}
+
 	twc := twrap.NewTWConfOrPanic(twrap.SetWriter(w))
+
 	twc.Wrap("This shows how the modules relate to one another."+
 		"\n\n"+
 		"The level value indicates that the module requires modules"+
@@ -68,42 +70,60 @@ func printReportIntro(w io.Writer, n uint64) {
 // error is not nii the header is invalid
 func (prog *Prog) makeHeader() (*col.Header, error) {
 	hdrOpts := make([]col.HdrOptionFunc, 0)
+
 	if !prog.showHeader {
 		hdrOpts = append(hdrOpts, col.HdrOptDontPrint)
 	}
+
 	if prog.showIntro {
 		hdrOpts = append(hdrOpts,
 			col.HdrOptPreHdrFunc(printReportIntro),
 		)
 	}
+
 	return col.NewHeader(hdrOpts...)
 }
 
 // makeReport constructs the report and returns it with an error. If the
 // error is not nii the report is invalid
 func (modules ModMap) makeReport(h *col.Header, prog *Prog) *col.Report {
+	const digitsToShow = 3
+
 	cols := make([]*col.Col, 0, len(prog.columnsToShow))
 
 	if prog.columnsToShow[ColLevel] {
-		cols = append(cols, col.New(colfmt.Int{W: 3}, "Level"))
+		cols = append(cols,
+			col.New(colfmt.Int{W: digitsToShow}, "Level"))
 	}
+
 	cols = append(cols,
 		col.New(colfmt.String{W: modules.findMaxNameLen()}, "Module name"))
+
 	if prog.columnsToShow[ColUseCount] {
-		cols = append(cols, col.New(colfmt.Int{W: 3}, "Count", "Used By"))
+		cols = append(cols,
+			col.New(colfmt.Int{W: digitsToShow}, "Count", "Used By"))
 	}
+
 	if prog.columnsToShow[ColUsesCountInt] {
-		cols = append(cols, col.New(colfmt.Int{W: 3}, "Count", "Uses (int)"))
+		cols = append(cols,
+			col.New(colfmt.Int{W: digitsToShow}, "Count", "Uses (int)"))
 	}
+
 	if prog.columnsToShow[ColUsesCountExt] {
-		cols = append(cols, col.New(colfmt.Int{W: 3}, "Count", "Uses (ext)"))
+		cols = append(cols,
+			col.New(colfmt.Int{W: digitsToShow}, "Count", "Uses (ext)"))
 	}
+
 	if prog.columnsToShow[ColPackages] {
-		cols = append(cols, col.New(colfmt.Int{W: 3}, "Count", "Packages"))
+		cols = append(cols,
+			col.New(colfmt.Int{W: digitsToShow}, "Count", "Packages"))
 	}
+
 	if prog.columnsToShow[ColPkgLines] {
-		cols = append(cols, col.New(colfmt.Int{W: 7}, "Package", "LoC"))
+		cols = append(cols,
+			col.New(colfmt.Int{W: digitsToShow}, "Package", "LoC"))
 	}
+
 	if prog.columnsToShow[ColUsedBy] {
 		cols = append(cols, col.New(colfmt.String{}, "Used By"))
 	}
@@ -111,6 +131,7 @@ func (modules ModMap) makeReport(h *col.Header, prog *Prog) *col.Report {
 	if len(cols) == 1 {
 		return col.NewReportOrPanic(h, os.Stdout, cols[0])
 	}
+
 	return col.NewReportOrPanic(h, os.Stdout, cols[0], cols[1:]...)
 }
 
@@ -120,6 +141,7 @@ func (prog *Prog) addLevelCol(mi *ModInfo, colVals []any) []any {
 	if prog.columnsToShow[ColLevel] {
 		colVals = append(colVals, mi.Level)
 	}
+
 	return colVals
 }
 
@@ -129,6 +151,7 @@ func (prog *Prog) addUseCountCol(mi *ModInfo, colVals []any) []any {
 	if prog.columnsToShow[ColUseCount] {
 		colVals = append(colVals, len(mi.ReqdBy))
 	}
+
 	return colVals
 }
 
@@ -137,11 +160,14 @@ func (prog *Prog) addUseCountCol(mi *ModInfo, colVals []any) []any {
 func (prog *Prog) addUsedByCol(mi *ModInfo, colVals []any, i int) []any {
 	if prog.columnsToShow[ColUsedBy] {
 		val := ""
+
 		if len(mi.ReqdBy) > 0 {
 			val = mi.ReqdBy[i].Name
 		}
+
 		colVals = append(colVals, val)
 	}
+
 	return colVals
 }
 
@@ -151,6 +177,7 @@ func (prog *Prog) addUsesCountIntCol(mi *ModInfo, colVals []any) []any {
 	if prog.columnsToShow[ColUsesCountInt] {
 		colVals = append(colVals, mi.ReqCountInternal)
 	}
+
 	return colVals
 }
 
@@ -160,6 +187,7 @@ func (prog *Prog) addUsesCountExtCol(mi *ModInfo, colVals []any) []any {
 	if prog.columnsToShow[ColUsesCountExt] {
 		colVals = append(colVals, mi.ReqCountExternal)
 	}
+
 	return colVals
 }
 
@@ -169,6 +197,7 @@ func (prog *Prog) addPackagesCol(mi *ModInfo, colVals []any) []any {
 	if prog.columnsToShow[ColPackages] {
 		colVals = append(colVals, len(mi.Packages))
 	}
+
 	return colVals
 }
 
@@ -178,13 +207,16 @@ func (prog *Prog) addPackagesCol(mi *ModInfo, colVals []any) []any {
 func (prog *Prog) addPackagesLoCCol(mi *ModInfo, colVals []any) []any {
 	if prog.columnsToShow[ColPkgLines] {
 		linesOfCode := 0
+
 		for _, pkg := range mi.Packages {
 			for _, gi := range pkg.Files {
 				linesOfCode += gi.LineCount
 			}
 		}
+
 		colVals = append(colVals, linesOfCode)
 	}
+
 	return colVals
 }
 
@@ -225,7 +257,9 @@ func (prog *Prog) skipModInfo(mi *ModInfo) bool {
 // subsequent rows all the columns up to the UsedBy column are skipped
 func (prog *Prog) printModInfo(rpt *col.Report, mi *ModInfo, lastLevel int) error {
 	vals := make([]any, 0, len(prog.columnsToShow)+1)
+
 	var skipCount uint
+
 	if prog.columnsToShow[ColLevel] {
 		if lastLevel == mi.Level &&
 			prog.hideDupLevels &&
@@ -235,13 +269,16 @@ func (prog *Prog) printModInfo(rpt *col.Report, mi *ModInfo, lastLevel int) erro
 			vals = prog.addLevelCol(mi, vals)
 		}
 	}
+
 	vals = append(vals, mi.Name)
 	vals = prog.addUseCountCol(mi, vals)
 	vals = prog.addUsesCountIntCol(mi, vals)
 	vals = prog.addUsesCountExtCol(mi, vals)
 	vals = prog.addPackagesCol(mi, vals)
 	vals = prog.addPackagesLoCCol(mi, vals)
+
 	var skipCountExtras uint
+
 	if prog.canSkipCols {
 		skipCountExtras = uint(len(vals))
 	}
@@ -250,6 +287,7 @@ func (prog *Prog) printModInfo(rpt *col.Report, mi *ModInfo, lastLevel int) erro
 	if err != nil {
 		return err
 	}
+
 	return prog.reportExtraUsedByValues(rpt,
 		skipCount+skipCountExtras, vals, mi)
 }
@@ -265,6 +303,7 @@ func (prog *Prog) reportExtraUsedByValues(rpt *col.Report, skip uint,
 	if prog.canSkipCols {
 		vals = vals[:0]
 	}
+
 	for i := 1; i < len(mi.ReqdBy); i++ {
 		err := rpt.PrintRowSkipCols(skip, prog.addUsedByCol(mi, vals, i)...)
 		if err != nil {
@@ -282,9 +321,10 @@ func (modules ModMap) reportModuleInfo(prog *Prog) {
 		fmt.Println("Couldn't make the report header:", err)
 		return
 	}
-	rpt := modules.makeReport(h, prog)
 
+	rpt := modules.makeReport(h, prog)
 	lastLevel := -1
+
 	for _, mi := range modules.makeModInfoSlice(prog.sortBy) {
 		if prog.skipModInfo(mi) {
 			continue
@@ -296,6 +336,7 @@ func (modules ModMap) reportModuleInfo(prog *Prog) {
 			fmt.Println("Error found while printing the report:", err)
 			break
 		}
+
 		lastLevel = mi.Level
 	}
 }

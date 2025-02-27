@@ -6,9 +6,11 @@ func lessByLevel(ms []*ModInfo, i, j int) bool {
 	if ms[i].Level < ms[j].Level {
 		return true
 	}
+
 	if ms[i].Level > ms[j].Level {
 		return false
 	}
+
 	return ms[i].Name < ms[j].Name
 }
 
@@ -18,9 +20,11 @@ func lessByUseCount(ms []*ModInfo, i, j int) bool {
 	if len(ms[i].ReqdBy) < len(ms[j].ReqdBy) {
 		return true
 	}
+
 	if len(ms[i].ReqdBy) > len(ms[j].ReqdBy) {
 		return false
 	}
+
 	return ms[i].Name < ms[j].Name
 }
 
@@ -31,9 +35,11 @@ func lessByReqCountInt(ms []*ModInfo, i, j int) bool {
 	if ms[i].ReqCountInternal < ms[j].ReqCountInternal {
 		return true
 	}
+
 	if ms[i].ReqCountInternal > ms[j].ReqCountInternal {
 		return false
 	}
+
 	return ms[i].Name < ms[j].Name
 }
 
@@ -44,8 +50,10 @@ func lessByReqCountExt(ms []*ModInfo, i, j int) bool {
 	if ms[i].ReqCountExternal < ms[j].ReqCountExternal {
 		return true
 	}
+
 	if ms[i].ReqCountExternal > ms[j].ReqCountExternal {
 		return false
 	}
+
 	return ms[i].Name < ms[j].Name
 }

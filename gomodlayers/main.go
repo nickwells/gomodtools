@@ -99,11 +99,14 @@ func parseAllGoModFiles(goModFilenames []string) ModMap {
 func (modules ModMap) calcLevels() {
 	levelChange := true
 	maxLevel := 0
+
 	for levelChange && maxLevel <= len(modules) {
 		levelChange = false
+
 		for _, mi := range modules {
 			if mi.calcLevel() {
 				levelChange = true
+
 				if mi.Level > maxLevel {
 					maxLevel = mi.Level
 				}
@@ -129,6 +132,7 @@ func (modules ModMap) findMaxNameLen() uint {
 			l = len(mi.Name)
 		}
 	}
+
 	return uint(l) //nolint:gosec
 }
 
@@ -155,6 +159,7 @@ func (modules ModMap) makeModInfoSlice(order string) []*ModInfo {
 		sort.Slice(ms,
 			func(i, j int) bool { return lessByReqCountExt(ms, i, j) })
 	}
+
 	return ms
 }
 

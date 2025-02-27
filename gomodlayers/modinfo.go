@@ -45,16 +45,16 @@ func parseGoModFile(modules ModMap, contents []byte, loc *location.L) (
 	*ModInfo, error,
 ) {
 	modFile, err := modfile.Parse(loc.Source(), contents, nil)
-
 	if err != nil {
 		return nil, err
 	}
 
 	mi := getModuleInfo(modules, modFile.Module.Mod.Path, loc)
 
-	for _, m := range modFile.Require {
-		mi.addReqs(modules, m.Mod.Path, loc)
+	for _, req := range modFile.Require {
+		mi.addReqs(modules, req.Mod.Path)
 	}
+
 	return mi, nil
 }
 
@@ -68,6 +68,7 @@ func getModuleInfo(modules ModMap, modName string, loc *location.L) *ModInfo {
 		mi.Loc = loc
 
 		modules[modName] = mi
+
 		return mi
 	}
 
@@ -89,12 +90,13 @@ func getModuleInfo(modules ModMap, modName string, loc *location.L) *ModInfo {
 // module and record that as a requirement of the module and also record that
 // this module requires the other module. If there is a problem it will
 // report it .
-func (mi *ModInfo) addReqs(modules ModMap, requires string, loc *location.L) {
+func (mi *ModInfo) addReqs(modules ModMap, requires string) {
 	reqdMI, ok := modules[requires]
 	if !ok { // the required module is not yet known, so create a new one
 		reqdMI = NewModInfo(requires)
 		modules[requires] = reqdMI
 	}
+
 	reqdMI.ReqdBy = append(reqdMI.ReqdBy, mi)
 	mi.Reqs = append(mi.Reqs, reqdMI)
 }
@@ -104,12 +106,14 @@ func (mi *ModInfo) addReqs(modules ModMap, requires string, loc *location.L) {
 // been changed.
 func (mi *ModInfo) calcLevel() bool {
 	levelChange := false
+
 	for _, rmi := range mi.Reqs {
 		if rmi.Level >= mi.Level {
 			mi.Level = rmi.Level + 1
 			levelChange = true
 		}
 	}
+
 	return levelChange
 }
 
@@ -151,9 +155,11 @@ func (mi *ModInfo) getPackageInfo(dirName string) {
 
 	if len(errs) != 0 {
 		fmt.Println("Errors found while finding the package Go files")
+
 		for _, err := range errs {
 			fmt.Println("\t", err)
 		}
+
 		return
 	}
 
@@ -164,6 +170,7 @@ func (mi *ModInfo) getPackageInfo(dirName string) {
 			fmt.Println("\t", err)
 			continue
 		}
+
 		importName := filepath.Clean(
 			mi.Name +
 				filepath.Dir(
@@ -180,7 +187,9 @@ func (mi *ModInfo) getPackageInfo(dirName string) {
 			}
 			mi.Packages[importName] = pkg
 		}
+
 		gi := getGoInfo(fileSet, info)
+
 		if strings.HasSuffix(fName, "_test.go") {
 			pkg.TestFiles = append(pkg.TestFiles, gi)
 			if pName == basePName {
