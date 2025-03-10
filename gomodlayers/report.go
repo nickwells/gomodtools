@@ -331,7 +331,6 @@ func (modules ModMap) reportModuleInfo(prog *Prog) {
 		}
 
 		err = prog.printModInfo(rpt, mi, lastLevel)
-
 		if err != nil {
 			fmt.Println("Error found while printing the report:", err)
 			break
