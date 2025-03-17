@@ -3,14 +3,14 @@ module github.com/nickwells/gomodtools
 go 1.24
 
 require (
-	github.com/nickwells/check.mod/v2 v2.1.16
-	github.com/nickwells/dirsearch.mod/v2 v2.0.16
-	github.com/nickwells/filecheck.mod v1.2.2
+	github.com/nickwells/check.mod/v2 v2.1.18
+	github.com/nickwells/dirsearch.mod/v2 v2.0.17
+	github.com/nickwells/filecheck.mod v1.2.3
 	github.com/nickwells/location.mod v1.2.28
-	github.com/nickwells/param.mod/v6 v6.2.1
+	github.com/nickwells/param.mod/v6 v6.2.2
 	github.com/nickwells/testhelper.mod/v2 v2.3.1
 	github.com/nickwells/twrap.mod v1.5.5
-	github.com/nickwells/versionparams.mod v1.2.11
+	github.com/nickwells/versionparams.mod v1.2.12
 	github.com/nickwells/xdg.mod v1.0.10
 	golang.org/x/mod v0.24.0
 )
@@ -18,7 +18,7 @@ require (
 require (
 	github.com/nickwells/col.mod/v4 v4.0.1
 	github.com/nickwells/strdist.mod/v2 v2.0.1 // indirect
-	github.com/nickwells/tempus.mod v1.2.1 // indirect
+	github.com/nickwells/tempus.mod v1.2.3 // indirect
 )
 
 require (
