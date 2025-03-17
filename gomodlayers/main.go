@@ -4,8 +4,10 @@ package main
 
 import (
 	"fmt"
+	"maps"
 	"os"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strings"
 
@@ -140,10 +142,7 @@ func (modules ModMap) findMaxNameLen() uint {
 // pointers. The slice will be sorted according to the value of the sort
 // parameter
 func (modules ModMap) makeModInfoSlice(order string) []*ModInfo {
-	ms := make([]*ModInfo, 0, len(modules))
-	for _, mi := range modules {
-		ms = append(ms, mi)
-	}
+	ms := slices.Collect[*ModInfo](maps.Values(modules))
 
 	switch order {
 	case ColLevel:
