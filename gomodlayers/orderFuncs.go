@@ -2,7 +2,7 @@ package main
 
 // lessByLevel returns true or false according to the levels of the ModInfo
 // entries. It will use the module name to resolve ties.
-func lessByLevel(ms []*ModInfo, i, j int) bool {
+func lessByLevel(ms []*modInfo, i, j int) bool {
 	if ms[i].Level < ms[j].Level {
 		return true
 	}
@@ -16,7 +16,7 @@ func lessByLevel(ms []*ModInfo, i, j int) bool {
 
 // lessByUseCount returns true or false according to the UseCounts of the
 // ModInfo entries. It will use the module name to resolve ties.
-func lessByUseCount(ms []*ModInfo, i, j int) bool {
+func lessByUseCount(ms []*modInfo, i, j int) bool {
 	if len(ms[i].ReqdBy) < len(ms[j].ReqdBy) {
 		return true
 	}
@@ -31,7 +31,7 @@ func lessByUseCount(ms []*ModInfo, i, j int) bool {
 // lessByReqCountInt returns true or false according to the internal
 // requirement count of the ModInfo entries. It will use the module name to
 // resolve ties.
-func lessByReqCountInt(ms []*ModInfo, i, j int) bool {
+func lessByReqCountInt(ms []*modInfo, i, j int) bool {
 	if ms[i].ReqCountInternal < ms[j].ReqCountInternal {
 		return true
 	}
@@ -46,7 +46,7 @@ func lessByReqCountInt(ms []*ModInfo, i, j int) bool {
 // lessByReqCountExt returns true or false according to the external
 // requirement count of the ModInfo entries. It will use the module name to
 // resolve ties.
-func lessByReqCountExt(ms []*ModInfo, i, j int) bool {
+func lessByReqCountExt(ms []*modInfo, i, j int) bool {
 	if ms[i].ReqCountExternal < ms[j].ReqCountExternal {
 		return true
 	}

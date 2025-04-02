@@ -63,8 +63,8 @@ func main() {
 // parseAllGoModFiles will process the list of filenames, opening each one in
 // turn and populating the moduleInfo map. If any filename doesn't end with
 // go.mod then that is added to the end of the path before further processing
-func parseAllGoModFiles(goModFilenames []string) ModMap {
-	modules := ModMap{}
+func parseAllGoModFiles(goModFilenames []string) modMap {
+	modules := modMap{}
 
 	const goMod = "go.mod"
 
@@ -73,7 +73,7 @@ func parseAllGoModFiles(goModFilenames []string) ModMap {
 			fname = filepath.Join(fname, goMod)
 		}
 
-		contents, err := os.ReadFile(fname)
+		contents, err := os.ReadFile(fname) //nolint:gosec
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			continue
@@ -98,7 +98,7 @@ func parseAllGoModFiles(goModFilenames []string) ModMap {
 // sufficient as Go does not permit loops in module requirements but to cope
 // with bugs in module specs we abort if the max level observed is greater
 // than the total number of modules being considered.
-func (modules ModMap) calcLevels() {
+func (modules modMap) calcLevels() {
 	levelChange := true
 	maxLevel := 0
 
@@ -120,14 +120,14 @@ func (modules ModMap) calcLevels() {
 // calcReqCount will calculate the number of internal and external
 // requirements for each module. If a required module has no location set
 // then it is taken to be an external requireement.
-func (modules ModMap) calcReqCount() {
+func (modules modMap) calcReqCount() {
 	for _, mi := range modules {
 		mi.setReqCounts()
 	}
 }
 
 // findMaxNameLen returns the length of the longest module name
-func (modules ModMap) findMaxNameLen() uint {
+func (modules modMap) findMaxNameLen() uint {
 	l := 0
 	for _, mi := range modules {
 		if len(mi.Name) > l {
@@ -141,8 +141,8 @@ func (modules ModMap) findMaxNameLen() uint {
 // makeModInfoSlice returns the modules map as a slice of ModInfo
 // pointers. The slice will be sorted according to the value of the sort
 // parameter
-func (modules ModMap) makeModInfoSlice(order string) []*ModInfo {
-	ms := slices.Collect[*ModInfo](maps.Values(modules))
+func (modules modMap) makeModInfoSlice(order string) []*modInfo {
+	ms := slices.Collect[*modInfo](maps.Values(modules))
 
 	switch order {
 	case ColLevel:
@@ -164,7 +164,7 @@ func (modules ModMap) makeModInfoSlice(order string) []*ModInfo {
 
 // expandModFilters takes the initial set of modFilters and adds all the
 // other modules that it is required by.
-func (modules ModMap) expandModFilters(prog *Prog) {
+func (modules modMap) expandModFilters(prog *Prog) {
 	if len(prog.modFilter) == 0 {
 		return
 	}

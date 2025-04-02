@@ -10,6 +10,7 @@ import (
 	"github.com/nickwells/twrap.mod/twrap"
 )
 
+// these constants name the available columns
 const (
 	ColLevel        = "level"
 	ColName         = "name"
@@ -86,7 +87,7 @@ func (prog *Prog) makeHeader() (*col.Header, error) {
 
 // makeReport constructs the report and returns it with an error. If the
 // error is not nii the report is invalid
-func (modules ModMap) makeReport(h *col.Header, prog *Prog) *col.Report {
+func (modules modMap) makeReport(h *col.Header, prog *Prog) *col.Report {
 	const digitsToShow = 3
 
 	cols := make([]*col.Col, 0, len(prog.columnsToShow))
@@ -137,7 +138,7 @@ func (modules ModMap) makeReport(h *col.Header, prog *Prog) *col.Report {
 
 // addLevelCol adds the level column value to the colVals and returns the new
 // colVals
-func (prog *Prog) addLevelCol(mi *ModInfo, colVals []any) []any {
+func (prog *Prog) addLevelCol(mi *modInfo, colVals []any) []any {
 	if prog.columnsToShow[ColLevel] {
 		colVals = append(colVals, mi.Level)
 	}
@@ -147,7 +148,7 @@ func (prog *Prog) addLevelCol(mi *ModInfo, colVals []any) []any {
 
 // addUseCountCol adds the use count column value to the colVals and returns
 // the new colVals
-func (prog *Prog) addUseCountCol(mi *ModInfo, colVals []any) []any {
+func (prog *Prog) addUseCountCol(mi *modInfo, colVals []any) []any {
 	if prog.columnsToShow[ColUseCount] {
 		colVals = append(colVals, len(mi.ReqdBy))
 	}
@@ -157,7 +158,7 @@ func (prog *Prog) addUseCountCol(mi *ModInfo, colVals []any) []any {
 
 // addUsedByCol adds the use count column value to the colVals and returns
 // the new colVals
-func (prog *Prog) addUsedByCol(mi *ModInfo, colVals []any, i int) []any {
+func (prog *Prog) addUsedByCol(mi *modInfo, colVals []any, i int) []any {
 	if prog.columnsToShow[ColUsedBy] {
 		val := ""
 
@@ -173,7 +174,7 @@ func (prog *Prog) addUsedByCol(mi *ModInfo, colVals []any, i int) []any {
 
 // addUsesCountIntCol adds the uses count (internal) column value to the
 // colVals and returns the new colVals
-func (prog *Prog) addUsesCountIntCol(mi *ModInfo, colVals []any) []any {
+func (prog *Prog) addUsesCountIntCol(mi *modInfo, colVals []any) []any {
 	if prog.columnsToShow[ColUsesCountInt] {
 		colVals = append(colVals, mi.ReqCountInternal)
 	}
@@ -183,7 +184,7 @@ func (prog *Prog) addUsesCountIntCol(mi *ModInfo, colVals []any) []any {
 
 // addUsesCountExtCol adds the uses count (external) column value to the
 // colVals and returns the new colVals
-func (prog *Prog) addUsesCountExtCol(mi *ModInfo, colVals []any) []any {
+func (prog *Prog) addUsesCountExtCol(mi *modInfo, colVals []any) []any {
 	if prog.columnsToShow[ColUsesCountExt] {
 		colVals = append(colVals, mi.ReqCountExternal)
 	}
@@ -193,7 +194,7 @@ func (prog *Prog) addUsesCountExtCol(mi *ModInfo, colVals []any) []any {
 
 // addPackagesCol adds the number of packages provided column value to the
 // colVals and returns the new colVals
-func (prog *Prog) addPackagesCol(mi *ModInfo, colVals []any) []any {
+func (prog *Prog) addPackagesCol(mi *modInfo, colVals []any) []any {
 	if prog.columnsToShow[ColPackages] {
 		colVals = append(colVals, len(mi.Packages))
 	}
@@ -204,7 +205,7 @@ func (prog *Prog) addPackagesCol(mi *ModInfo, colVals []any) []any {
 // addPackagesLoCCol adds the number of lines of package code column value to
 // the colVals and returns the new colVals. Note that only non-test files are
 // counted.
-func (prog *Prog) addPackagesLoCCol(mi *ModInfo, colVals []any) []any {
+func (prog *Prog) addPackagesLoCCol(mi *modInfo, colVals []any) []any {
 	if prog.columnsToShow[ColPkgLines] {
 		linesOfCode := 0
 
@@ -222,7 +223,7 @@ func (prog *Prog) addPackagesLoCCol(mi *ModInfo, colVals []any) []any {
 
 // addReqsToFilters will add all the ReqdBy entries for the module into the
 // filter map.
-func (prog *Prog) addReqsToFilters(mi *ModInfo) {
+func (prog *Prog) addReqsToFilters(mi *modInfo) {
 	for _, rb := range mi.ReqdBy {
 		prog.modFilter[rb.Name] = true
 	}
@@ -235,7 +236,7 @@ func (prog *Prog) addReqsToFilters(mi *ModInfo) {
 //
 // There is a module filter and the name does not match an entry in the
 // filters map.
-func (prog *Prog) skipModInfo(mi *ModInfo) bool {
+func (prog *Prog) skipModInfo(mi *modInfo) bool {
 	if mi.Loc == nil {
 		return true
 	}
@@ -255,7 +256,7 @@ func (prog *Prog) skipModInfo(mi *ModInfo) bool {
 //
 // For the first row of each module this is all that is skipped but for
 // subsequent rows all the columns up to the UsedBy column are skipped
-func (prog *Prog) printModInfo(rpt *col.Report, mi *ModInfo, lastLevel int) error {
+func (prog *Prog) printModInfo(rpt *col.Report, mi *modInfo, lastLevel int) error {
 	vals := make([]any, 0, len(prog.columnsToShow)+1)
 
 	var skipCount uint
@@ -294,7 +295,7 @@ func (prog *Prog) printModInfo(rpt *col.Report, mi *ModInfo, lastLevel int) erro
 
 // reportExtraUsedByValues reports any additional UsedBy module names
 func (prog *Prog) reportExtraUsedByValues(rpt *col.Report, skip uint,
-	vals []any, mi *ModInfo,
+	vals []any, mi *modInfo,
 ) error {
 	if !prog.columnsToShow[ColUsedBy] {
 		return nil
@@ -315,7 +316,7 @@ func (prog *Prog) reportExtraUsedByValues(rpt *col.Report, skip uint,
 }
 
 // reportModuleInfo prints the module information
-func (modules ModMap) reportModuleInfo(prog *Prog) {
+func (modules modMap) reportModuleInfo(prog *Prog) {
 	h, err := prog.makeHeader()
 	if err != nil {
 		fmt.Println("Couldn't make the report header:", err)
