@@ -21,7 +21,7 @@ const (
 )
 
 // addParams will add parameters to the passed param.PSet
-func addParams(prog *Prog) param.PSetOptFunc {
+func addParams(prog *prog) param.PSetOptFunc {
 	return func(ps *param.PSet) error {
 		ps.Add(paramNamesOnly,
 			psetter.Nil{},

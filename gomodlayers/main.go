@@ -16,39 +16,8 @@ import (
 
 // Created: Thu Mar 28 12:13:29 2019
 
-// Prog holds program parameters and status
-type Prog struct {
-	hideDupLevels bool
-	canSkipCols   bool
-	showIntro     bool
-	showHeader    bool
-
-	sortBy string
-
-	modFilter     map[string]bool
-	columnsToShow map[string]bool
-}
-
-// NewProg returns a new Prog instance with the default values set
-func NewProg() *Prog {
-	return &Prog{
-		canSkipCols: true,
-		showIntro:   true,
-		showHeader:  true,
-
-		sortBy: ColLevel,
-
-		modFilter: map[string]bool{},
-		columnsToShow: map[string]bool{
-			ColLevel:    true,
-			ColName:     true,
-			ColUseCount: true,
-		},
-	}
-}
-
 func main() {
-	prog := NewProg()
+	prog := newProg()
 	ps := makeParamSet(prog)
 
 	ps.Parse()
@@ -164,7 +133,7 @@ func (modules modMap) makeModInfoSlice(order string) []*modInfo {
 
 // expandModFilters takes the initial set of modFilters and adds all the
 // other modules that it is required by.
-func (modules modMap) expandModFilters(prog *Prog) {
+func (modules modMap) expandModFilters(prog *prog) {
 	if len(prog.modFilter) == 0 {
 		return
 	}
