@@ -41,12 +41,15 @@ func addParams(prog *prog) param.PSetOptFunc {
 			"suppress the printing of the header",
 			param.AltNames("hide-hdr", "no-hdr"),
 		)
+
 		ps.Add(paramHideIntro,
 			psetter.Bool{Value: &prog.showIntro, Invert: true},
 			"suppress the printing of the introductory text"+
 				" explaining the meaning of the report",
-			param.AltNames("no-intro"),
+			param.AltNames("no-intro", "quiet"),
+			param.SeeAlso(paramHideHeader, paramBrief),
 		)
+
 		ps.Add(paramBrief,
 			psetter.Nil{},
 			"suppress the printing of both the introductory text"+
