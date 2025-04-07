@@ -57,6 +57,7 @@ func parseAllGoModFiles(goModFilenames []string) modMap {
 
 		mi.getPackageInfo(filepath.Dir(fname))
 	}
+
 	sortReqdByNames(modules)
 
 	return modules
@@ -123,7 +124,7 @@ func (modules modMap) findMaxNameLen() uint {
 // pointers. The slice will be sorted according to the value of the sort
 // parameter
 func (modules modMap) makeModInfoSlice(order string) []*modInfo {
-	ms := slices.Collect[*modInfo](maps.Values(modules))
+	ms := slices.Collect(maps.Values(modules))
 
 	switch order {
 	case ColLevel:
@@ -146,13 +147,19 @@ func (modules modMap) makeModInfoSlice(order string) []*modInfo {
 // expandModFilters takes the initial set of modFilters and adds all the
 // other modules that it is required by.
 func (modules modMap) expandModFilters(prog *prog) {
-	if len(prog.modFilter) == 0 {
+	if len(prog.modFilter) == 0 &&
+		len(prog.partialFilter) == 0 {
 		return
 	}
 
 	for _, mi := range modules.makeModInfoSlice(ColLevel) {
 		if prog.modFilter[mi.Name] {
 			prog.addReqsToFilters(mi)
+		} else {
+			if prog.matchPartialFilters(mi.Name) {
+				prog.modFilter[mi.Name] = true
+				prog.addReqsToFilters(mi)
+			}
 		}
 	}
 }

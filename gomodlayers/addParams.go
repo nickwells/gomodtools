@@ -18,6 +18,7 @@ const (
 	paramNamesByLevel  = "names-by-level"
 	paramNamesOnly     = "names-only"
 	paramFilter        = "filter"
+	paramPartialFilter = "partial-filter"
 )
 
 // addParams will add parameters to the passed param.PSet
@@ -142,13 +143,35 @@ func addParams(prog *prog) param.PSetOptFunc {
 
 		ps.Add(paramFilter,
 			psetter.Map[string]{Value: &prog.modFilter},
-			"the module name to filter by."+
-				" The report will only show this module"+
-				" and any module that uses this module."+
+			"the module names to filter by."+
+				" The report will only show these modules"+
+				" and any modules that uses them."+
 				" The notion of 'used' is recursive so that"+
 				" if the filter is on module A"+
 				" and module B uses A and C uses B but not A (directly)"+
 				" then modules A, B and C will be shown.",
+			param.AltNames("filt", "f"),
+			param.SeeAlso(paramPartialFilter),
+		)
+
+		ps.Add(paramPartialFilter,
+			psetter.Map[string]{Value: &prog.partialFilter},
+			"the module names to filter by."+
+				" This behaves like the "+paramFilter+
+				" but the match is only on the end of the module name"+
+				" and any version number part is excluded."+
+				" so for instance a module called 'A/B/C/v2' would"+
+				" be matched"+
+				" by a partial filter of:\n"+
+				"'A/B/C'\n"+
+				"'B/C'\n"+
+				"or just 'C'."+
+				"\n\n"+
+				"Note that a partial filter might match multiple modules"+
+				" if they have differing prefixes before the start of"+
+				" the partial filter.",
+			param.AltNames("pf"),
+			param.SeeAlso(paramFilter),
 		)
 
 		// allow trailing arguments
