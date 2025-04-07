@@ -57,8 +57,20 @@ func parseAllGoModFiles(goModFilenames []string) modMap {
 
 		mi.getPackageInfo(filepath.Dir(fname))
 	}
+	sortReqdByNames(modules)
 
 	return modules
+}
+
+// sortReqdByNames sorts the entries in the ReqdBy slices for each modInfo
+// entry in the modules map. the entries are sorted by the module name.
+func sortReqdByNames(modules modMap) {
+	for _, mi := range modules {
+		slices.SortFunc(mi.ReqdBy,
+			func(a, b *modInfo) int {
+				return strings.Compare(a.Name, b.Name)
+			})
+	}
 }
 
 // calcLevels will repeatedly go over the modules resetting the level to be
