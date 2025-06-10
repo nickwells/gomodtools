@@ -5,8 +5,8 @@ import (
 	"io"
 	"os"
 
-	"github.com/nickwells/col.mod/v4/col"
-	"github.com/nickwells/col.mod/v4/colfmt"
+	"github.com/nickwells/col.mod/v5/col"
+	"github.com/nickwells/col.mod/v5/colfmt"
 	"github.com/nickwells/twrap.mod/twrap"
 )
 
@@ -94,39 +94,46 @@ func (modules modMap) makeReport(h *col.Header, prog *prog) *col.Report {
 
 	if prog.columnsToShow[ColLevel] {
 		cols = append(cols,
-			col.New(colfmt.Int{W: digitsToShow}, "Level"))
+			col.New(
+				&colfmt.Int{
+					W: digitsToShow,
+					DupHdlr: colfmt.DupHdlr{
+						SkipDups: prog.canSkipCols,
+					},
+				},
+				"Level"))
 	}
 
 	cols = append(cols,
-		col.New(colfmt.String{W: modules.findMaxNameLen()}, "Module name"))
+		col.New(&colfmt.String{W: modules.findMaxNameLen()}, "Module name"))
 
 	if prog.columnsToShow[ColUseCount] {
 		cols = append(cols,
-			col.New(colfmt.Int{W: digitsToShow}, "Count", "Used By"))
+			col.New(&colfmt.Int{W: digitsToShow}, "Count", "Used By"))
 	}
 
 	if prog.columnsToShow[ColUsesCountInt] {
 		cols = append(cols,
-			col.New(colfmt.Int{W: digitsToShow}, "Count", "Uses (int)"))
+			col.New(&colfmt.Int{W: digitsToShow}, "Count", "Uses (int)"))
 	}
 
 	if prog.columnsToShow[ColUsesCountExt] {
 		cols = append(cols,
-			col.New(colfmt.Int{W: digitsToShow}, "Count", "Uses (ext)"))
+			col.New(&colfmt.Int{W: digitsToShow}, "Count", "Uses (ext)"))
 	}
 
 	if prog.columnsToShow[ColPackages] {
 		cols = append(cols,
-			col.New(colfmt.Int{W: digitsToShow}, "Count", "Packages"))
+			col.New(&colfmt.Int{W: digitsToShow}, "Count", "Packages"))
 	}
 
 	if prog.columnsToShow[ColPkgLines] {
 		cols = append(cols,
-			col.New(colfmt.Int{W: digitsToShow}, "Package", "LoC"))
+			col.New(&colfmt.Int{W: digitsToShow}, "Package", "LoC"))
 	}
 
 	if prog.columnsToShow[ColUsedBy] {
-		cols = append(cols, col.New(colfmt.String{}, "Used By"))
+		cols = append(cols, col.New(&colfmt.String{}, "Used By"))
 	}
 
 	if len(cols) == 1 {
@@ -256,7 +263,8 @@ func (prog *prog) skipModInfo(mi *modInfo) bool {
 //
 // For the first row of each module this is all that is skipped but for
 // subsequent rows all the columns up to the UsedBy column are skipped
-func (prog *prog) printModInfo(rpt *col.Report, mi *modInfo, lastLevel int) error {
+func (prog *prog) printModInfo(rpt *col.Report, mi *modInfo, lastLevel int,
+) error {
 	vals := make([]any, 0, len(prog.columnsToShow)+1)
 
 	var skipCount uint
