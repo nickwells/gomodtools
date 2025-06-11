@@ -139,6 +139,12 @@ func (modules modMap) makeModInfoSlice(order string) []*modInfo {
 	case ColUsesCountExt:
 		sort.Slice(ms,
 			func(i, j int) bool { return lessByReqCountExt(ms, i, j) })
+	case ColPackages:
+		sort.Slice(ms,
+			func(i, j int) bool { return lessByPackages(ms, i, j) })
+	case ColPkgLines:
+		sort.Slice(ms,
+			func(i, j int) bool { return lessByPkgLines(ms, i, j) })
 	}
 
 	return ms

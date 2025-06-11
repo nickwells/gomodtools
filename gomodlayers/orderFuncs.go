@@ -57,3 +57,45 @@ func lessByReqCountExt(ms []*modInfo, i, j int) bool {
 
 	return ms[i].Name < ms[j].Name
 }
+
+// lessByPackages returns true or false according to the number of packages
+// in the module. It will use the module name to resolve ties.
+func lessByPackages(ms []*modInfo, i, j int) bool {
+	if len(ms[i].Packages) < len(ms[j].Packages) {
+		return true
+	}
+
+	if len(ms[i].Packages) > len(ms[j].Packages) {
+		return false
+	}
+
+	return ms[i].Name < ms[j].Name
+}
+
+// lessByPkgLines returns true or false according to the number of lines in
+// the packages in the module. It will use the module name to resolve ties.
+func lessByPkgLines(ms []*modInfo, i, j int) bool {
+	var locI, locJ int
+
+	for _, pkg := range ms[i].Packages {
+		for _, gi := range pkg.Files {
+			locI += gi.LineCount
+		}
+	}
+
+	for _, pkg := range ms[j].Packages {
+		for _, gi := range pkg.Files {
+			locJ += gi.LineCount
+		}
+	}
+
+	if locI < locJ {
+		return true
+	}
+
+	if locI > locJ {
+		return false
+	}
+
+	return ms[i].Name < ms[j].Name
+}

@@ -84,7 +84,12 @@ func addParams(prog *prog) param.PSetOptFunc {
 					ColUsesCountInt: "in order of how much use the module" +
 						" makes of other modules in the collection",
 					ColUsesCountExt: "in order of how much use the module" +
-						" makes of modules not in the collection",
+						" makes of (non-stdlib) modules not in the collection",
+					ColPackages: "in order of how many packages" +
+						" the module has",
+					ColPkgLines: "in order of how many" +
+						" lines of (non-test) code" +
+						" there are in the module's packages",
 				},
 			},
 			"what order should the modules be sorted when reporting",
@@ -102,10 +107,11 @@ func addParams(prog *prog) param.PSetOptFunc {
 					ColUsesCountInt: "how much use the module makes" +
 						" of other modules in the collection",
 					ColUsesCountExt: "how much use the module makes" +
-						" of modules not in the collection",
+						" of (non-stdlib) modules not in the collection",
 					ColPackages: "how many packages does this module provide",
-					ColPkgLines: "how many lines of code the module" +
-						" packages provide",
+					ColPkgLines: "how many lines of" +
+						" (non-test) code" +
+						" there are in the module's packages",
 				},
 				Aliases: psetter.Aliases[string]{
 					"all": {
