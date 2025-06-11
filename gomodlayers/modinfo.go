@@ -109,7 +109,8 @@ func (mi *modInfo) calcLevel() bool {
 	levelChange := false
 
 	for _, rmi := range mi.Reqs {
-		if rmi.Level >= mi.Level {
+		if rmi.Level >= mi.Level &&
+			rmi.Loc != nil { // ignore modules not in set of considered modules
 			mi.Level = rmi.Level + 1
 			levelChange = true
 		}
