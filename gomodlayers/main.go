@@ -52,6 +52,7 @@ func parseAllGoModFiles(goModFilenames []string) modMap {
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error: No module defined in: %q: %s\n",
 				fname, err)
+
 			continue
 		}
 
