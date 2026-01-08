@@ -107,13 +107,13 @@ func (modules modMap) calcReqCount() {
 }
 
 // findMaxNameLen returns the length of the longest module name
-func (modules modMap) findMaxNameLen() uint {
+func (modules modMap) findMaxNameLen() int {
 	maxLen := 0
 	for _, mi := range modules {
 		maxLen = max(len(mi.Name), maxLen)
 	}
 
-	return uint(maxLen)
+	return maxLen
 }
 
 // makeModInfoSlice returns the modules map as a slice of ModInfo

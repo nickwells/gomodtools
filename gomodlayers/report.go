@@ -5,8 +5,8 @@ import (
 	"io"
 	"os"
 
-	"github.com/nickwells/col.mod/v5/col"
-	"github.com/nickwells/col.mod/v5/colfmt"
+	"github.com/nickwells/col.mod/v6/col"
+	"github.com/nickwells/col.mod/v6/colfmt"
 	"github.com/nickwells/twrap.mod/twrap"
 )
 
@@ -23,7 +23,7 @@ const (
 )
 
 // printReportIntro prints the report introduction
-func printReportIntro(w io.Writer, n uint64) {
+func printReportIntro(w io.Writer, n int64) {
 	if n != 0 {
 		return
 	}
@@ -267,7 +267,7 @@ func (prog *prog) printModInfo(rpt *col.Report, mi *modInfo, lastLevel int,
 ) error {
 	vals := make([]any, 0, len(prog.columnsToShow)+1)
 
-	var skipCount uint
+	var skipCount int
 
 	if prog.columnsToShow[ColLevel] {
 		if lastLevel == mi.Level &&
@@ -286,10 +286,10 @@ func (prog *prog) printModInfo(rpt *col.Report, mi *modInfo, lastLevel int,
 	vals = prog.addPackagesCol(mi, vals)
 	vals = prog.addPackagesLoCCol(mi, vals)
 
-	var skipCountExtras uint
+	var skipCountExtras int
 
 	if prog.canSkipCols {
-		skipCountExtras = uint(len(vals))
+		skipCountExtras = len(vals)
 	}
 
 	err := rpt.PrintRowSkipCols(skipCount, prog.addUsedByCol(mi, vals, 0)...)
@@ -302,7 +302,7 @@ func (prog *prog) printModInfo(rpt *col.Report, mi *modInfo, lastLevel int,
 }
 
 // reportExtraUsedByValues reports any additional UsedBy module names
-func (prog *prog) reportExtraUsedByValues(rpt *col.Report, skip uint,
+func (prog *prog) reportExtraUsedByValues(rpt *col.Report, skip int,
 	vals []any, mi *modInfo,
 ) error {
 	if !prog.columnsToShow[ColUsedBy] {
