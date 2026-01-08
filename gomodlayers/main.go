@@ -91,10 +91,7 @@ func (modules modMap) calcLevels() {
 		for _, mi := range modules {
 			if mi.calcLevel() {
 				levelChange = true
-
-				if mi.Level > maxLevel {
-					maxLevel = mi.Level
-				}
+				maxLevel = max(mi.Level, maxLevel)
 			}
 		}
 	}
@@ -111,14 +108,12 @@ func (modules modMap) calcReqCount() {
 
 // findMaxNameLen returns the length of the longest module name
 func (modules modMap) findMaxNameLen() uint {
-	l := 0
+	maxLen := 0
 	for _, mi := range modules {
-		if len(mi.Name) > l {
-			l = len(mi.Name)
-		}
+		maxLen = max(len(mi.Name), maxLen)
 	}
 
-	return uint(l) //nolint:gosec
+	return uint(maxLen)
 }
 
 // makeModInfoSlice returns the modules map as a slice of ModInfo
