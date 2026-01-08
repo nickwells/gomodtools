@@ -37,7 +37,7 @@ func newProg() *prog {
 	}
 }
 
-var versionRE = regexp.MustCompile(`v[2-9][0-9]*`)
+var versionRE = regexp.MustCompile(`v[1-9][0-9]*`)
 
 // matchPartialFilters matches the full module name against the partial
 // filters. This ignores any version string at the end of the name and any
