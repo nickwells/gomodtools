@@ -124,6 +124,7 @@ func addParams(prog *prog) param.PSetOptFunc {
 						ColPkgLines,
 					},
 					"lines":      {ColPkgLines},
+					"loc":        {ColPkgLines},
 					"uses-count": {ColUsesCountExt, ColUsesCountInt},
 				},
 				AllowHiddenMapEntries: true,
