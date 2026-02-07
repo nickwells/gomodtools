@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/nickwells/param.mod/v6/param"
+	"github.com/nickwells/param.mod/v7/param"
 )
 
 // addExamples will add examples to the passed param.PSet

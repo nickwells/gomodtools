@@ -22,7 +22,7 @@ func main() {
 
 	ps.Parse()
 
-	modules := parseAllGoModFiles(ps.Remainder())
+	modules := parseAllGoModFiles(ps.TrailingParams())
 	modules.calcLevels()
 	modules.calcReqCount()
 	modules.expandModFilters(prog)

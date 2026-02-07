@@ -2,9 +2,9 @@ package main
 
 import (
 	"github.com/nickwells/location.mod/location"
-	"github.com/nickwells/param.mod/v6/paction"
-	"github.com/nickwells/param.mod/v6/param"
-	"github.com/nickwells/param.mod/v6/psetter"
+	"github.com/nickwells/param.mod/v7/paction"
+	"github.com/nickwells/param.mod/v7/param"
+	"github.com/nickwells/param.mod/v7/psetter"
 )
 
 const (
@@ -28,7 +28,7 @@ func addParams(prog *prog) param.PSetOptFunc {
 			psetter.Nil{},
 			"reset the list of columns to only show the module names",
 			param.PostAction(
-				func(_ location.L, _ *param.ByName, _ []string) error {
+				func(_ location.L, _ *param.BaseParam, _ []string) error {
 					prog.columnsToShow = map[string]bool{
 						ColName: true,
 					}
@@ -139,7 +139,7 @@ func addParams(prog *prog) param.PSetOptFunc {
 			param.PostAction(paction.SetVal(&prog.showIntro, false)),
 			param.PostAction(paction.SetVal(&prog.sortBy, ColLevel)),
 			param.PostAction(
-				func(_ location.L, _ *param.ByName, _ []string) error {
+				func(_ location.L, _ *param.BaseParam, _ []string) error {
 					prog.columnsToShow = map[string]bool{
 						ColName: true,
 					}
@@ -180,12 +180,6 @@ func addParams(prog *prog) param.PSetOptFunc {
 			param.AltNames("pf"),
 			param.SeeAlso(paramFilter),
 		)
-
-		// allow trailing arguments
-		err := ps.SetNamedRemHandler(param.NullRemHandler{}, "go.mod-files")
-		if err != nil {
-			return err
-		}
 
 		return nil
 	}

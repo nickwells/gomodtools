@@ -3,23 +3,24 @@ package main
 import (
 	"os"
 
-	"github.com/nickwells/param.mod/v6/param"
-	"github.com/nickwells/param.mod/v6/paramset"
+	"github.com/nickwells/param.mod/v7/param"
+	"github.com/nickwells/param.mod/v7/paramset"
 	"github.com/nickwells/versionparams.mod/versionparams"
 )
 
 // makeParamSet generates the param set ready for parsing
 func makeParamSet(prog *prog) *param.PSet {
-	return paramset.NewOrPanic(
+	return paramset.New(
 		versionparams.AddParams,
 		addParams(prog),
+		param.SetTrailingParamsName("go.mod-files"),
 		addExamples,
 		SetGlobalConfigFile,
 		SetConfigFile,
 		param.SetProgramDescription("This will take a list of go.mod"+
-			" files (or directories) as trailing arguments"+
-			" (after '"+param.DfltTerminalParam+"'), parse them and print"+
-			" a report. The report will show how they relate to one"+
+			" files (or directories) as trailing arguments,"+
+			" parse them and print a report."+
+			" The report will show how they relate to one"+
 			" another with regards to dependencies and can print them in"+
 			" such an order that an earlier module does not depend on any"+
 			" subsequent module."+
