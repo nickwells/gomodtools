@@ -8,32 +8,32 @@ import (
 // prog holds program parameters and status
 type prog struct {
 	hideDupLevels bool
-	canSkipCols   bool
 	showIntro     bool
 	showHeader    bool
 
-	sortBy string
+	sortBy []colName
 
 	modFilter     map[string]bool
 	partialFilter map[string]bool
-	columnsToShow map[string]bool
+	columnsToShow []colName
+
+	reportDigits int
+	headerRepeat int
 }
 
 // newProg returns a new Prog instance with the default values set
 func newProg() *prog {
+	const dfltDigitsToShow = 5
+
 	return &prog{
-		canSkipCols: true,
-		showIntro:   true,
-		showHeader:  true,
+		showIntro:  true,
+		showHeader: true,
 
-		sortBy: ColLevel,
+		sortBy:        []colName{ColLevel},
+		columnsToShow: []colName{ColLevel, ColName, ColUseCount},
 
-		modFilter: map[string]bool{},
-		columnsToShow: map[string]bool{
-			ColLevel:    true,
-			ColName:     true,
-			ColUseCount: true,
-		},
+		modFilter:    map[string]bool{},
+		reportDigits: dfltDigitsToShow,
 	}
 }
 

@@ -1,6 +1,9 @@
 package main
 
 import (
+	"slices"
+
+	"github.com/nickwells/check.mod/v2/check"
 	"github.com/nickwells/location.mod/location"
 	"github.com/nickwells/param.mod/v7/paction"
 	"github.com/nickwells/param.mod/v7/param"
@@ -12,7 +15,7 @@ const (
 	paramHideIntro     = "hide-intro"
 	paramHideDupLevels = "hide-dup-levels"
 	paramBrief         = "brief"
-	paramNoSkips       = "no-skips"
+	paramHeaderRepeat  = "header-repeat"
 	paramSortOrder     = "sort-order"
 	paramShowCols      = "show-cols"
 	paramNamesByLevel  = "names-by-level"
@@ -26,12 +29,10 @@ func addParams(prog *prog) param.PSetOptFunc {
 	return func(ps *param.PSet) error {
 		ps.Add(paramNamesOnly,
 			psetter.Nil{},
-			"reset the list of columns to only show the module names",
+			"set the list of columns to only show the module names",
 			param.PostAction(
 				func(_ location.L, _ *param.BaseParam, _ []string) error {
-					prog.columnsToShow = map[string]bool{
-						ColName: true,
-					}
+					prog.columnsToShow = []colName{ColName}
 
 					return nil
 				}),
@@ -41,6 +42,16 @@ func addParams(prog *prog) param.PSetOptFunc {
 			psetter.Bool{Value: &prog.showHeader, Invert: true},
 			"suppress the printing of the header",
 			param.AltNames("hide-hdr", "no-hdr"),
+		)
+
+		ps.Add(paramHeaderRepeat,
+			psetter.Int[int]{
+				Value: &prog.headerRepeat,
+				Checks: []check.ValCk[int]{
+					check.ValGE(1),
+				},
+			},
+			"after how many lines should the header be reprinted",
 		)
 
 		ps.Add(paramHideIntro,
@@ -64,20 +75,10 @@ func addParams(prog *prog) param.PSetOptFunc {
 				" is the same as on the previous line",
 		)
 
-		ps.Add(paramNoSkips,
-			psetter.Bool{Value: &prog.canSkipCols, Invert: true},
-			"don't skip the printing of columns where the row"+
-				" value is the same as on the previous line."+
-				" Note that this value overrides"+
-				" the '"+paramHideDupLevels+"' parameter (if set)",
-			param.PostAction(paction.SetVal(&prog.hideDupLevels, false)),
-			param.AltNames("dont-skip-cols", "dont-skip"),
-		)
-
 		ps.Add(paramSortOrder,
-			psetter.Enum[string]{
+			psetter.EnumList[colName]{
 				Value: &prog.sortBy,
-				AllowedVals: psetter.AllowedVals[string]{
+				AllowedVals: psetter.AllowedVals[colName]{
 					ColLevel:    "in level order (lowest first)",
 					ColName:     "in name order",
 					ColUseCount: "in order of how heavily used the module is",
@@ -91,17 +92,22 @@ func addParams(prog *prog) param.PSetOptFunc {
 						" lines of (non-test) code" +
 						" there are in the module's packages",
 				},
+				Aliases: psetter.Aliases[colName]{
+					"lines": {ColPkgLines},
+					"loc":   {ColPkgLines},
+				},
 			},
 			"what order should the modules be sorted when reporting",
 			param.AltNames("sort-by"),
 		)
 
 		ps.Add(paramShowCols,
-			psetter.EnumMap[string]{
+			psetter.EnumList[colName]{
 				Value: &prog.columnsToShow,
-				AllowedVals: psetter.AllowedVals[string]{
+				AllowedVals: psetter.AllowedVals[colName]{
 					ColLevel: "where the module lies in the dependency" +
 						" order",
+					ColName:     "the module name",
 					ColUseCount: "how heavily used the module is",
 					ColUsedBy:   "the modules that use this",
 					ColUsesCountInt: "how much use the module makes" +
@@ -113,13 +119,14 @@ func addParams(prog *prog) param.PSetOptFunc {
 						" (non-test) code" +
 						" there are in the module's packages",
 				},
-				Aliases: psetter.Aliases[string]{
+				Aliases: psetter.Aliases[colName]{
 					"all": {
 						ColLevel,
-						ColUseCount,
-						ColUsedBy,
+						ColName,
 						ColUsesCountExt,
 						ColUsesCountInt,
+						ColUseCount,
+						ColUsedBy,
 						ColPackages,
 						ColPkgLines,
 					},
@@ -127,22 +134,34 @@ func addParams(prog *prog) param.PSetOptFunc {
 					"loc":        {ColPkgLines},
 					"uses-count": {ColUsesCountExt, ColUsesCountInt},
 				},
-				AllowHiddenMapEntries: true,
 			},
-			"what columns should be shown (note that the name is always shown)",
+			"what columns should be shown."+
+				" Note that the name is always shown,"+
+				" it will be added as the first column"+
+				" if it is not already present",
 			param.AltNames("show", "cols", "col"),
+			param.PostAction(
+				func(_ location.L, _ *param.BaseParam, _ []string) error {
+					if slices.Contains(prog.columnsToShow, ColName) {
+						return nil
+					}
+
+					prog.columnsToShow = append([]colName{ColName},
+						prog.columnsToShow...)
+
+					return nil
+				}),
 		)
 
 		ps.Add(paramNamesByLevel, psetter.Nil{},
 			"just show the module names in level order",
 			param.PostAction(paction.SetVal(&prog.showHeader, false)),
 			param.PostAction(paction.SetVal(&prog.showIntro, false)),
-			param.PostAction(paction.SetVal(&prog.sortBy, ColLevel)),
+			param.PostAction(paction.SetVal(&prog.sortBy,
+				[]colName{ColLevel, ColName})),
 			param.PostAction(
 				func(_ location.L, _ *param.BaseParam, _ []string) error {
-					prog.columnsToShow = map[string]bool{
-						ColName: true,
-					}
+					prog.columnsToShow = []colName{ColName}
 
 					return nil
 				}),

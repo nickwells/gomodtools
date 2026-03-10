@@ -8,7 +8,6 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
-	"sort"
 	"strings"
 
 	"github.com/nickwells/location.mod/location"
@@ -116,32 +115,29 @@ func (modules modMap) findMaxNameLen() int {
 	return maxLen
 }
 
+// mkSortFunc returns a comparison function which will compare two modInfo
+// structures and return a value indicating if they are less than, equal to
+// or greater than each other according to the order value.
+func mkSortFunc(order []colName) func(a, b *modInfo) int {
+	return func(a, b *modInfo) int {
+		for _, o := range order {
+			rval := columnCmpFunc[o](a, b)
+			if rval != 0 {
+				return rval
+			}
+		}
+
+		return columnCmpFunc[ColName](a, b)
+	}
+}
+
 // makeModInfoSlice returns the modules map as a slice of ModInfo
 // pointers. The slice will be sorted according to the value of the sort
 // parameter
-func (modules modMap) makeModInfoSlice(order string) []*modInfo {
+func (modules modMap) makeModInfoSlice(order []colName) []*modInfo {
 	ms := slices.Collect(maps.Values(modules))
 
-	switch order {
-	case ColLevel:
-		sort.Slice(ms, func(i, j int) bool { return lessByLevel(ms, i, j) })
-	case ColName:
-		sort.Slice(ms, func(i, j int) bool { return ms[i].Name < ms[j].Name })
-	case ColUseCount:
-		sort.Slice(ms, func(i, j int) bool { return lessByUseCount(ms, i, j) })
-	case ColUsesCountInt:
-		sort.Slice(ms,
-			func(i, j int) bool { return lessByReqCountInt(ms, i, j) })
-	case ColUsesCountExt:
-		sort.Slice(ms,
-			func(i, j int) bool { return lessByReqCountExt(ms, i, j) })
-	case ColPackages:
-		sort.Slice(ms,
-			func(i, j int) bool { return lessByPackages(ms, i, j) })
-	case ColPkgLines:
-		sort.Slice(ms,
-			func(i, j int) bool { return lessByPkgLines(ms, i, j) })
-	}
+	slices.SortFunc(ms, mkSortFunc(order))
 
 	return ms
 }
@@ -154,7 +150,7 @@ func (modules modMap) expandModFilters(prog *prog) {
 		return
 	}
 
-	for _, mi := range modules.makeModInfoSlice(ColLevel) {
+	for _, mi := range modules.makeModInfoSlice([]colName{ColLevel}) {
 		if prog.modFilter[mi.Name] {
 			prog.addReqsToFilters(mi)
 		} else {

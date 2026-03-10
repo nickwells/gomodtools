@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"go/ast"
 	"go/parser"
 	"go/token"
 	"os"
@@ -194,6 +193,8 @@ func (mi *modInfo) getPackageInfo(dirName string) {
 
 		if strings.HasSuffix(fName, "_test.go") {
 			pkg.TestFiles = append(pkg.TestFiles, gi)
+			pkg.TestFilesLoC += gi.LineCount
+
 			if pName == basePName {
 				pkg.HasTestsInt = true
 			} else {
@@ -201,35 +202,7 @@ func (mi *modInfo) getPackageInfo(dirName string) {
 			}
 		} else {
 			pkg.Files = append(pkg.Files, gi)
+			pkg.FilesLoC += gi.LineCount
 		}
 	}
-}
-
-// GoInfo records Go information about a file
-type GoInfo struct {
-	FileName  string
-	LineCount int
-	Info      *ast.File
-}
-
-// PkgInfo records aggregate package information
-type PkgInfo struct {
-	Name        string
-	ImportName  string
-	Files       []GoInfo
-	TestFiles   []GoInfo
-	HasTestsInt bool
-	HasTestsAPI bool
-}
-
-// getGoInfo finds Go information from the Go File
-func getGoInfo(fileSet *token.FileSet, info *ast.File) GoInfo {
-	file := fileSet.File(info.Pos())
-	gi := GoInfo{
-		FileName:  file.Name(),
-		LineCount: file.LineCount(),
-		Info:      info,
-	}
-
-	return gi
 }
