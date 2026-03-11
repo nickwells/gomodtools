@@ -6,6 +6,7 @@ require (
 	github.com/nickwells/check.mod/v2 v2.1.27
 	github.com/nickwells/col.mod/v6 v6.0.2
 	github.com/nickwells/dirsearch.mod/v2 v2.0.25
+	github.com/nickwells/english.mod v1.2.7
 	github.com/nickwells/filecheck.mod v1.2.11
 	github.com/nickwells/location.mod v1.2.34
 	github.com/nickwells/param.mod/v7 v7.0.1
@@ -22,7 +23,6 @@ require (
 )
 
 require (
-	github.com/nickwells/english.mod v1.2.7 // indirect
 	github.com/nickwells/errutil.mod v1.2.22 // indirect
 	github.com/nickwells/fileparse.mod v1.1.37 // indirect
 	github.com/nickwells/mathutil.mod/v2 v2.5.8 // indirect

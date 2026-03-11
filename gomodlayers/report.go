@@ -9,49 +9,38 @@ import (
 	"github.com/nickwells/twrap.mod/twrap"
 )
 
-// printReportIntro prints the report introduction
-func printReportIntro(w io.Writer, n int64) {
-	if n != 0 {
-		return
+// makeReportIntroFunc returns a function that can be supplied when
+// constructing a report header and will be called before the header is
+// printed.
+func makeReportIntroFunc(prog *prog) col.PreHdrFunc {
+	const colNameIndent = 4
+
+	var maxColNameLen = 0
+
+	for _, c := range prog.columnsToShow {
+		maxColNameLen = max(maxColNameLen, len(c))
 	}
 
-	twc := twrap.NewTWConfOrPanic(twrap.SetWriter(w))
+	return func(w io.Writer, i int64) {
+		if i != 0 {
+			return
+		}
 
-	twc.Wrap("This shows how the modules relate to one another."+
-		"\n\n"+
-		"The level value indicates that the module requires modules"+
-		" having lower level values and does not require any modules having"+
-		" a higher level."+
-		"\n\n"+
-		"The use count shows how many other modules require this module. A"+
-		" high use count means if you change this module, you'll have to"+
-		" update the go.mod file of many other modules."+
-		"\n\n"+
-		"The used-by columns shows which other modules require this module."+
-		"\n\n"+
-		"The uses count (internal) indicates how many other modules from"+
-		" this collection this module requires."+
-		"\n\n"+
-		"The uses count (external) indicates how many modules from outside"+
-		" this collection this module requires."+
-		"\n\n"+
-		"The packages count shows how many directories with Go source code"+
-		" there are in the module. This may be 'main' packages (generating"+
-		" executable binaries)."+
-		"\n\n"+
-		"The package lines of code shows how many non-test lines there are"+
-		" in the packages."+
-		"\n\n"+
-		"This allows you to make judgements about changes you are making."+
-		" For instance, if you are changing a module at level 3,"+
-		" you might have to make changes to other modules with"+
-		" higher levels (4 or greater) but you will not have to"+
-		" make any changes to modules with levels 3 or less."+
-		" If you make changes to a module with a zero use count"+
-		" you know that no other modules will be affected."+
-		" Alternatively, if you change a module with a high use count"+
-		" then many other modules will be impacted.",
-		0)
+		twc := twrap.NewTWConfOrPanic(twrap.SetWriter(w))
+
+		twc.Wrap("This gives information about a collection of modules"+
+			" and how they relate to one another."+
+			" The information in this report can be interpreted as follows.",
+			0)
+
+		for _, c := range prog.columnsToShow {
+			twc.Println()
+			twc.WrapPrefixed(fmt.Sprintf("%-*s ", maxColNameLen, c),
+				columnDescription[c],
+				colNameIndent)
+		}
+		twc.Println()
+	}
 }
 
 // makeHeader constructs the header and returns it with an error. If the
@@ -65,7 +54,7 @@ func (prog *prog) makeHeader() (*col.Header, error) {
 
 	if prog.showIntro {
 		hdrOpts = append(hdrOpts,
-			col.HdrOptPreHdrFunc(printReportIntro),
+			col.HdrOptPreHdrFunc(makeReportIntroFunc(prog)),
 		)
 	}
 
