@@ -35,54 +35,55 @@ var columnHeadings = map[colName][]string{
 	ColPkgLines:     {"Package", "LoC"},
 }
 
+// columnHeaded returns a description of the headings used for this column.
+func columnHeaded(cn colName) string {
+	return "This column is headed: " +
+		english.JoinQuoted(columnHeadings[cn], "/", "/")
+}
+
 var columnDescription = map[colName]string{
 	ColLevel: "this shows how the module relates to other" +
 		" modules. Any module at level N only uses modules at level N-1" +
-		" and below. The lower the level number the greater the impact of" +
+		" and below. It is only used by modules at level N+1 and above." +
+		" The lower the level number the greater the impact of" +
 		" any changes to this module will have on the whole collection of" +
 		" modules." +
 		"\n\n" +
-		"This column is headed: " +
-		english.JoinQuoted(columnHeadings[ColLevel], "/", "/"),
+		columnHeaded(ColLevel),
 	ColName: "this is the module name. It includes the module" +
 		" version number (if any)." +
 		"\n\n" +
-		"This column is headed: " +
-		english.JoinQuoted(columnHeadings[ColName], "/", "/"),
+		columnHeaded(ColName),
 	ColUseCount: "this shows how many other modules in the" +
 		" collection use this module. The larger this number" +
 		" the greater the impact of a change to this module." +
 		"\n\n" +
-		"This column is headed: " +
-		english.JoinQuoted(columnHeadings[ColUseCount], "/", "/"),
+		columnHeaded(ColUseCount),
 	ColUsedBy: "this lists the names of the modules using this" +
-		" module. Each of these will need to be changed to reflect" +
+		" module both directly and indirectly (through the use" +
+		" of a package that itself uses this pachage)." +
+		" Each of these will need to be changed to reflect" +
 		" a change in the semantic version number of this module." +
 		" These changes in turn will require a change to their semantic" +
 		" version numbers and so on." +
 		"\n\n" +
-		"This column is headed: " +
-		english.JoinQuoted(columnHeadings[ColUsedBy], "/", "/"),
+		columnHeaded(ColUsedBy),
 	ColUsesCountInt: "this gives the number of other modules in this" +
 		" collection that this module uses." +
 		"\n\n" +
-		"This column is headed: " +
-		english.JoinQuoted(columnHeadings[ColUsesCountInt], "/", "/"),
+		columnHeaded(ColUsesCountInt),
 	ColUsesCountExt: "this gives the number of modules not in this" +
 		" collection that this module uses." +
 		"\n\n" +
-		"This column is headed: " +
-		english.JoinQuoted(columnHeadings[ColUsesCountExt], "/", "/"),
+		columnHeaded(ColUsesCountExt),
 	ColPackages: "this gives the number of packages that are in this" +
 		" module. It will include commands (with package name 'main')." +
 		"\n\n" +
-		"This column is headed: " +
-		english.JoinQuoted(columnHeadings[ColPackages], "/", "/"),
+		columnHeaded(ColPackages),
 	ColPkgLines: "this gives the total number of lines of non-test code" +
 		" in the packages." +
 		"\n\n" +
-		"This column is headed: " +
-		english.JoinQuoted(columnHeadings[ColPkgLines], "/", "/"),
+		columnHeaded(ColPkgLines),
 }
 
 var reportColumns = map[colName]func(prog *prog, modules modMap) *col.Col{
