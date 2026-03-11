@@ -23,6 +23,7 @@ func makeReportIntroFunc(prog *prog) col.PreHdrFunc {
 
 	return func(w io.Writer, i int64) {
 		if i != 0 {
+			fmt.Fprintln(w)
 			return
 		}
 
