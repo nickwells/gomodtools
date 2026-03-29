@@ -1,9 +1,19 @@
 package main
 
 import (
+	"fmt"
+	"io"
 	"path"
 	"regexp"
+
+	"github.com/nickwells/col.mod/v6/col"
+	"github.com/nickwells/col.mod/v6/rptmaker"
+	"github.com/nickwells/param.mod/v7/psetter"
+	"github.com/nickwells/twrap.mod/twrap"
 )
+
+// sortCol is a type alias for the TaggedEnum
+type sortCol = psetter.TaggedValue[rptmaker.ColID, rptmaker.SortWay]
 
 // prog holds program parameters and status
 type prog struct {
@@ -11,14 +21,18 @@ type prog struct {
 	showIntro     bool
 	showHeader    bool
 
-	sortBy []colName
+	sortBy []sortCol
 
 	modFilter     map[string]bool
 	partialFilter map[string]bool
-	columnsToShow []colName
+	columnsToShow []rptmaker.ColID
+
+	maxNameLen int
 
 	reportDigits int
 	headerRepeat int
+
+	cols *rptmaker.Cols[*prog, *modInfo]
 }
 
 // newProg returns a new Prog instance with the default values set
@@ -29,12 +43,26 @@ func newProg() *prog {
 		showIntro:  true,
 		showHeader: true,
 
-		sortBy:        []colName{ColLevel},
-		columnsToShow: []colName{ColLevel, ColName, ColUseCount},
+		sortBy:        []sortCol{{Value: ColLevel}, {Value: ColName}},
+		columnsToShow: []rptmaker.ColID{ColLevel, ColName, ColUseCount},
 
 		modFilter:    map[string]bool{},
 		reportDigits: dfltDigitsToShow,
+
+		cols: populateCols(),
 	}
+}
+
+// makeSortCols converts the prog.sortBy slice into a slice of
+// [rptmaker.SortColumns].
+func (prog *prog) makeSortCols() []rptmaker.SortColumn {
+	sortCols := make([]rptmaker.SortColumn, 0, len(prog.sortBy))
+
+	for _, sc := range prog.sortBy {
+		sortCols = append(sortCols, rptmaker.MakeSortColumn(sc.Value, sc.Tags))
+	}
+
+	return sortCols
 }
 
 var versionRE = regexp.MustCompile(`v[1-9][0-9]*`)
@@ -74,5 +102,70 @@ func (prog *prog) matchPartialFilters(moduleName string) bool {
 
 		dir, lp = path.Split(dir[:len(dir)-1])
 		lastPart = lp + "/" + lastPart
+	}
+}
+
+// headerOptFuncs returns a slice of header option functions
+func (prog *prog) headerOptFuncs() []col.HdrOptionFunc {
+	hdrOpts := []col.HdrOptionFunc{}
+
+	if !prog.showHeader {
+		hdrOpts = append(hdrOpts, col.HdrOptDontPrint)
+	}
+
+	if prog.showIntro {
+		hdrOpts = append(hdrOpts,
+			col.HdrOptPreHdrFunc(makeReportIntroFunc(prog)),
+		)
+	}
+
+	if prog.headerRepeat > 0 {
+		hdrOpts = append(hdrOpts,
+			col.HdrOptRepeat(int64(prog.headerRepeat)),
+		)
+	}
+
+	return hdrOpts
+}
+
+// makeReportIntroFunc returns a function that can be supplied when
+// constructing a report header and will be called before the header is
+// printed.
+func makeReportIntroFunc(prog *prog) col.PreHdrFunc {
+	const colNameIndent = 4
+
+	maxColNameLen := 0
+
+	for _, c := range prog.columnsToShow {
+		maxColNameLen = max(maxColNameLen, len(c))
+	}
+
+	return func(w io.Writer, i int64) {
+		if i != 0 {
+			fmt.Fprintln(w)
+			return
+		}
+
+		twc := twrap.NewTWConfOrPanic(twrap.SetWriter(w))
+
+		twc.Wrap("This gives information about a collection of modules"+
+			" and how they relate to one another."+
+			" The information in this report can be interpreted as follows.",
+			0)
+
+		for _, cid := range prog.columnsToShow {
+			ci, err := prog.cols.GetReportableColInfo(cid)
+			if err != nil {
+				twc.Println(err)
+				continue
+			}
+
+			twc.Println()
+			twc.WrapPrefixed(fmt.Sprintf("%-*s ", maxColNameLen, cid),
+				ci.FullDesc(),
+				colNameIndent)
+		}
+
+		twc.Println()
 	}
 }

@@ -22,6 +22,7 @@ func main() {
 	ps.Parse()
 
 	modules := parseAllGoModFiles(ps.TrailingParams())
+	prog.maxNameLen = modules.findMaxNameLen()
 	modules.calcLevels()
 	modules.calcReqCount()
 	modules.expandModFilters(prog)
@@ -115,33 +116,6 @@ func (modules modMap) findMaxNameLen() int {
 	return maxLen
 }
 
-// mkSortFunc returns a comparison function which will compare two modInfo
-// structures and return a value indicating if they are less than, equal to
-// or greater than each other according to the order value.
-func mkSortFunc(order []colName) func(a, b *modInfo) int {
-	return func(a, b *modInfo) int {
-		for _, o := range order {
-			rval := columnCmpFunc[o](a, b)
-			if rval != 0 {
-				return rval
-			}
-		}
-
-		return columnCmpFunc[ColName](a, b)
-	}
-}
-
-// makeModInfoSlice returns the modules map as a slice of ModInfo
-// pointers. The slice will be sorted according to the value of the sort
-// parameter
-func (modules modMap) makeModInfoSlice(order []colName) []*modInfo {
-	ms := slices.Collect(maps.Values(modules))
-
-	slices.SortFunc(ms, mkSortFunc(order))
-
-	return ms
-}
-
 // expandModFilters takes the initial set of modFilters and adds all the
 // other modules that it is required by.
 func (modules modMap) expandModFilters(prog *prog) {
@@ -150,7 +124,7 @@ func (modules modMap) expandModFilters(prog *prog) {
 		return
 	}
 
-	for _, mi := range modules.makeModInfoSlice([]colName{ColLevel}) {
+	for _, mi := range slices.Collect(maps.Values(modules)) {
 		if prog.modFilter[mi.Name] {
 			prog.addReqsToFilters(mi)
 		} else {

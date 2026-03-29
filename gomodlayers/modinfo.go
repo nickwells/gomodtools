@@ -17,14 +17,15 @@ import (
 
 // modInfo records information gleaned from the go.mod files
 type modInfo struct {
-	Loc              *location.L
-	Name             string
-	Reqs             []*modInfo
-	ReqCountInternal int
-	ReqCountExternal int
-	Level            int
-	ReqdBy           []*modInfo
-	Packages         map[string]*PkgInfo
+	Loc         *location.L
+	Name        string
+	Reqs        []*modInfo
+	ReqCountInt int
+	ReqCountExt int
+	Level       int
+	LinesOfCode int
+	ReqdBy      []*modInfo
+	Packages    map[string]*PkgInfo
 }
 
 // newModInfo creates a new ModInfo with the name populated and the Packages
@@ -125,9 +126,9 @@ func (mi *modInfo) calcLevel() bool {
 func (mi *modInfo) setReqCounts() {
 	for _, rmi := range mi.Reqs {
 		if rmi.Loc == nil {
-			mi.ReqCountExternal++
+			mi.ReqCountExt++
 		} else {
-			mi.ReqCountInternal++
+			mi.ReqCountInt++
 		}
 	}
 }
@@ -203,6 +204,7 @@ func (mi *modInfo) getPackageInfo(dirName string) {
 		} else {
 			pkg.Files = append(pkg.Files, gi)
 			pkg.FilesLoC += gi.LineCount
+			mi.LinesOfCode += gi.LineCount
 		}
 	}
 }

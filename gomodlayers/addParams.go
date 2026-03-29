@@ -4,6 +4,7 @@ import (
 	"slices"
 
 	"github.com/nickwells/check.mod/v2/check"
+	"github.com/nickwells/col.mod/v6/rptmaker"
 	"github.com/nickwells/location.mod/location"
 	"github.com/nickwells/param.mod/v7/paction"
 	"github.com/nickwells/param.mod/v7/param"
@@ -24,6 +25,8 @@ const (
 	paramPartialFilter = "partial-filter"
 )
 
+type sortWay = rptmaker.SortWay
+
 // addParams will add parameters to the passed param.PSet
 func addParams(prog *prog) param.PSetOptFunc {
 	return func(ps *param.PSet) error {
@@ -32,7 +35,7 @@ func addParams(prog *prog) param.PSetOptFunc {
 			"set the list of columns to only show the module names",
 			param.PostAction(
 				func(_ location.L, _ *param.BaseParam, _ []string) error {
-					prog.columnsToShow = []colName{ColName}
+					prog.columnsToShow = []rptmaker.ColID{ColName}
 
 					return nil
 				}),
@@ -76,64 +79,38 @@ func addParams(prog *prog) param.PSetOptFunc {
 		)
 
 		ps.Add(paramSortOrder,
-			psetter.EnumList[colName]{
+			psetter.TaggedValueList[rptmaker.ColID, sortWay]{
 				Value: &prog.sortBy,
-				AllowedVals: psetter.AllowedVals[colName]{
-					ColLevel:    "in level order (lowest first)",
-					ColName:     "in name order",
-					ColUseCount: "in order of how heavily used the module is",
-					ColUsesCountInt: "in order of how much use the module" +
-						" makes of other modules in the collection",
-					ColUsesCountExt: "in order of how much use the module" +
-						" makes of (non-stdlib) modules not in the collection",
-					ColPackages: "in order of how many packages" +
-						" the module has",
-					ColPkgLines: "in order of how many" +
-						" lines of (non-test) code" +
-						" there are in the module's packages",
-				},
-				Aliases: psetter.Aliases[colName]{
-					"lines": {ColPkgLines},
-					"loc":   {ColPkgLines},
+				AllowedVals: psetter.AllowedVals[rptmaker.ColID](
+					prog.cols.Sortable(),
+				),
+				Aliases: psetter.Aliases[rptmaker.ColID](
+					prog.cols.SortableAliases(),
+				),
+				TagAllowedVals: psetter.AllowedVals[sortWay](
+					rptmaker.AllowedSortDirections(),
+				),
+				TagAliases: psetter.Aliases[sortWay](
+					rptmaker.SortDirectionAliases(),
+				),
+				TagListSeparator: psetter.StrListSeparator{Sep: "|"},
+				TagChecks: []check.ValCk[[]sortWay]{
+					check.SliceLength[[]sortWay](check.ValBetween(0, 1)),
 				},
 			},
 			"what order should the modules be sorted when reporting",
-			param.AltNames("sort-by"),
+			param.AltNames("sort-by", "order-by", "order"),
 		)
 
 		ps.Add(paramShowCols,
-			psetter.EnumList[colName]{
+			psetter.EnumList[rptmaker.ColID]{
 				Value: &prog.columnsToShow,
-				AllowedVals: psetter.AllowedVals[colName]{
-					ColLevel: "where the module lies in the dependency" +
-						" order",
-					ColName:     "the module name",
-					ColUseCount: "how heavily used the module is",
-					ColUsedBy:   "the modules that use this",
-					ColUsesCountInt: "how much use the module makes" +
-						" of other modules in the collection",
-					ColUsesCountExt: "how much use the module makes" +
-						" of (non-stdlib) modules not in the collection",
-					ColPackages: "how many packages does this module provide",
-					ColPkgLines: "how many lines of" +
-						" (non-test) code" +
-						" there are in the module's packages",
-				},
-				Aliases: psetter.Aliases[colName]{
-					"all": {
-						ColLevel,
-						ColName,
-						ColUsesCountExt,
-						ColUsesCountInt,
-						ColUseCount,
-						ColUsedBy,
-						ColPackages,
-						ColPkgLines,
-					},
-					"lines":      {ColPkgLines},
-					"loc":        {ColPkgLines},
-					"uses-count": {ColUsesCountExt, ColUsesCountInt},
-				},
+				AllowedVals: psetter.AllowedVals[rptmaker.ColID](
+					prog.cols.Reportable(),
+				),
+				Aliases: psetter.Aliases[rptmaker.ColID](
+					prog.cols.ReportableAliases(),
+				),
 			},
 			"what columns should be shown."+
 				" Note that the name is always shown,"+
@@ -146,7 +123,7 @@ func addParams(prog *prog) param.PSetOptFunc {
 						return nil
 					}
 
-					prog.columnsToShow = append([]colName{ColName},
+					prog.columnsToShow = append([]rptmaker.ColID{ColName},
 						prog.columnsToShow...)
 
 					return nil
@@ -158,10 +135,13 @@ func addParams(prog *prog) param.PSetOptFunc {
 			param.PostAction(paction.SetVal(&prog.showHeader, false)),
 			param.PostAction(paction.SetVal(&prog.showIntro, false)),
 			param.PostAction(paction.SetVal(&prog.sortBy,
-				[]colName{ColLevel, ColName})),
+				[]sortCol{
+					{Value: ColLevel},
+					{Value: ColName},
+				})),
 			param.PostAction(
 				func(_ location.L, _ *param.BaseParam, _ []string) error {
-					prog.columnsToShow = []colName{ColName}
+					prog.columnsToShow = []rptmaker.ColID{ColName}
 
 					return nil
 				}),
@@ -171,7 +151,7 @@ func addParams(prog *prog) param.PSetOptFunc {
 			psetter.Map[string]{Value: &prog.modFilter},
 			"the module names to filter by."+
 				" The report will only show these modules"+
-				" and any modules that uses them."+
+				" and any modules that use them."+
 				" The notion of 'used' is recursive so that"+
 				" if the filter is on module A"+
 				" and module B uses A and C uses B but not A (directly)"+
