@@ -44,7 +44,7 @@ func newProg() *prog {
 		showHeader: true,
 
 		sortBy:        []sortCol{{Value: ColLevel}, {Value: ColName}},
-		columnsToShow: []rptmaker.ColID{ColLevel, ColName, ColUseCount},
+		columnsToShow: []rptmaker.ColID{ColLevel, ColName, ColUseCountTotal},
 
 		modFilter:    map[string]bool{},
 		reportDigits: dfltDigitsToShow,

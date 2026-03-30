@@ -10,7 +10,7 @@ import (
 // addReqsToFilters will add all the ReqdBy entries for the module into the
 // filter map.
 func (prog *prog) addReqsToFilters(mi *modInfo) {
-	for _, rb := range mi.ReqdBy {
+	for _, rb := range mi.ReqdByDirectly {
 		prog.modFilter[rb.Name] = true
 	}
 }

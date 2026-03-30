@@ -11,18 +11,25 @@ import (
 
 // these constants name the available columns
 const (
-	ColLevel        = rptmaker.ColID("level")
-	ColName         = rptmaker.ColID("name")
-	ColUseCount     = rptmaker.ColID("use-count")
-	ColUsedBy       = rptmaker.ColID("used-by")
-	ColUsesCountInt = rptmaker.ColID("uses-count-int")
-	ColUsesCountExt = rptmaker.ColID("uses-count-ext")
-	ColPackages     = rptmaker.ColID("packages")
-	ColPkgLines     = rptmaker.ColID("lines-of-code")
+	ColLevel          = rptmaker.ColID("level")
+	ColName           = rptmaker.ColID("name")
+	ColUseCountDirect = rptmaker.ColID("direct-use-count")
+	ColUseCountTotal  = rptmaker.ColID("use-count")
+	ColUsedBy         = rptmaker.ColID("used-by")
+	ColUsedByDirectly = rptmaker.ColID("used-by-directly")
+	ColUsesCountInt   = rptmaker.ColID("uses-count-int")
+	ColUsesCountExt   = rptmaker.ColID("uses-count-ext")
+	ColUsesDirectly   = rptmaker.ColID("uses-directly")
+	ColUses           = rptmaker.ColID("uses")
+	ColPackages       = rptmaker.ColID("packages")
+	ColPkgLines       = rptmaker.ColID("lines-of-code")
 )
 
 // populateCols populates and returns the report columns
 func populateCols() *rptmaker.Cols[*prog, *modInfo] {
+	indirectSeparator := []string{"", "** Indirect **"}
+	externalSeparator := []string{"", "** External **"}
+
 	allErrs := []error{}
 	cols := rptmaker.NewCols[*prog, *modInfo]()
 
@@ -57,18 +64,40 @@ func populateCols() *rptmaker.Cols[*prog, *modInfo] {
 				return col.New(&colfmt.String{W: prog.maxNameLen}, headings...)
 			},
 			func(mi *modInfo) any { return mi.Name },
-			func(a, b *modInfo) int { return strings.Compare(a.Name, b.Name) })))
+			func(a, b *modInfo) int {
+				return strings.Compare(a.Name, b.Name)
+			})))
 
-	allErrs = append(allErrs, cols.Add(ColUseCount,
+	allErrs = append(allErrs, cols.Add(ColUseCountDirect,
 		rptmaker.NewColInfo("this shows how many other modules in the"+
 			" collection use this module. The larger this number"+
 			" the greater the impact of a change to this module.",
-			[]string{"Count", "Used By"},
+			[]string{"Count", "Used By", "Directly"},
 			func(prog *prog, headings []string) *col.Col {
 				return col.New(&colfmt.Int{W: prog.reportDigits}, headings...)
 			},
-			func(mi *modInfo) any { return len(mi.ReqdBy) },
-			func(a, b *modInfo) int { return len(a.ReqdBy) - len(b.ReqdBy) })))
+			func(mi *modInfo) any { return len(mi.ReqdByDirectly) },
+			func(a, b *modInfo) int {
+				return len(a.ReqdByDirectly) - len(b.ReqdByDirectly)
+			})))
+
+	allErrs = append(allErrs, cols.Add(ColUseCountTotal,
+		rptmaker.NewColInfo("this shows how many other modules in the"+
+			" collection use this module, either directly or indirectly."+
+			" The larger this number the greater the impact of a change"+
+			" to this module.",
+			[]string{"Count", "Used By", "Total"},
+			func(prog *prog, headings []string) *col.Col {
+				return col.New(&colfmt.Int{W: prog.reportDigits}, headings...)
+			},
+			func(mi *modInfo) any {
+				return len(mi.ReqdByDirectly) + len(mi.ReqdByIndirectly)
+			},
+			func(a, b *modInfo) int {
+				aTotUseCount := len(a.ReqdByDirectly) + len(a.ReqdByIndirectly)
+				bTotUseCount := len(b.ReqdByDirectly) + len(b.ReqdByIndirectly)
+				return aTotUseCount - bTotUseCount
+			})))
 
 	allErrs = append(allErrs, cols.Add(ColUsedBy,
 		rptmaker.NewColInfo(
@@ -85,8 +114,39 @@ func populateCols() *rptmaker.Cols[*prog, *modInfo] {
 					headings...)
 			},
 			func(mi *modInfo) any {
-				reqdBy := make([]string, 0, len(mi.ReqdBy))
-				for _, p := range mi.ReqdBy {
+				reqdBy := make([]string, 0,
+					len(mi.ReqdByDirectly)+
+						len(mi.ReqdByIndirectly)+
+						len(indirectSeparator))
+				for _, p := range mi.ReqdByDirectly {
+					reqdBy = append(reqdBy, p.Name)
+				}
+				if len(mi.ReqdByIndirectly) > 0 {
+					reqdBy = append(reqdBy, indirectSeparator...)
+					for _, p := range mi.ReqdByIndirectly {
+						reqdBy = append(reqdBy, p.Name)
+					}
+				}
+
+				return strings.Join(reqdBy, "\n")
+			},
+			nil)))
+
+	allErrs = append(allErrs, cols.Add(ColUsedByDirectly,
+		rptmaker.NewColInfo(
+			"this lists the names of the modules using this"+
+				" module directly. Each of these may need to"+
+				" be changed to reflect any change in the API"+
+				" or behaviour of this module or to use any"+
+				" new features.",
+			[]string{"Used By", "Directly"},
+			func(prog *prog, headings []string) *col.Col {
+				return col.New(&colfmt.WrappedString{W: prog.maxNameLen},
+					headings...)
+			},
+			func(mi *modInfo) any {
+				reqdBy := make([]string, 0, len(mi.ReqdByDirectly))
+				for _, p := range mi.ReqdByDirectly {
 					reqdBy = append(reqdBy, p.Name)
 				}
 
@@ -97,8 +157,8 @@ func populateCols() *rptmaker.Cols[*prog, *modInfo] {
 	allErrs = append(allErrs, cols.Add(ColUsesCountInt,
 		rptmaker.NewColInfo(
 			"this gives the number of other modules in this"+
-				" collection that this module uses.",
-			[]string{"Count", "Uses (int)"},
+				" collection that this module uses directly.",
+			[]string{"Count", "Uses", "(int)"},
 			func(prog *prog, headings []string) *col.Col {
 				return col.New(&colfmt.Int{W: prog.reportDigits}, headings...)
 			},
@@ -109,14 +169,95 @@ func populateCols() *rptmaker.Cols[*prog, *modInfo] {
 	allErrs = append(allErrs, cols.Add(ColUsesCountExt,
 		rptmaker.NewColInfo(
 			"this gives the number of modules not in this"+
-				" collection that this module uses.",
-			[]string{"Count", "Uses (ext)"},
+				" collection that this module uses directly.",
+			[]string{"Count", "Uses", "(ext)"},
 			func(prog *prog, headings []string) *col.Col {
 				return col.New(&colfmt.Int{W: prog.reportDigits}, headings...)
 			},
 			func(mi *modInfo) any { return mi.ReqCountExt },
 			func(a, b *modInfo) int { return a.ReqCountExt - b.ReqCountExt },
 		)))
+
+	allErrs = append(allErrs, cols.Add(ColUsesDirectly,
+		rptmaker.NewColInfo(
+			"this lists the names of the modules that"+
+				" this module uses directly.",
+			[]string{"Uses", "Directly"},
+			func(prog *prog, headings []string) *col.Col {
+				return col.New(&colfmt.WrappedString{W: prog.maxNameLen},
+					headings...)
+			},
+			func(mi *modInfo) any {
+				uses := make([]string, 0,
+					len(mi.DirectReqs)+
+						len(externalSeparator))
+				usesExternal := []string{}
+				for _, p := range mi.DirectReqs {
+					if p.Loc == nil {
+						usesExternal = append(usesExternal, p.Name)
+						continue
+					}
+					uses = append(uses, p.Name)
+				}
+
+				if len(usesExternal) > 0 {
+					uses = append(uses, externalSeparator...)
+					uses = append(uses, usesExternal...)
+				}
+
+				return strings.Join(uses, "\n")
+			},
+			nil)))
+
+	allErrs = append(allErrs, cols.Add(ColUses,
+		rptmaker.NewColInfo(
+			"this lists the names of the modules that"+
+				" this module uses both directly and indirectly.",
+			[]string{"Uses"},
+			func(prog *prog, headings []string) *col.Col {
+				return col.New(&colfmt.WrappedString{W: prog.maxNameLen},
+					headings...)
+			},
+			func(mi *modInfo) any {
+				uses := make([]string, 0,
+					len(mi.DirectReqs)+
+						len(mi.IndirectReqs)+
+						len(indirectSeparator)+
+						len(externalSeparator))
+
+				usesExternal := []string{}
+
+				for _, p := range mi.DirectReqs {
+					if p.Loc == nil {
+						usesExternal = append(usesExternal, p.Name)
+						continue
+					}
+					uses = append(uses, p.Name)
+				}
+
+				if len(mi.IndirectReqs) > 0 {
+					usesIndirect := make([]string, 0, len(mi.IndirectReqs))
+					for _, p := range mi.IndirectReqs {
+						if p.Loc == nil {
+							usesExternal = append(usesExternal, p.Name)
+							continue
+						}
+						usesIndirect = append(usesIndirect, p.Name)
+					}
+					if len(usesIndirect) > 0 {
+						uses = append(uses, indirectSeparator...)
+						uses = append(uses, usesIndirect...)
+					}
+				}
+
+				if len(usesExternal) > 0 {
+					uses = append(uses, externalSeparator...)
+					uses = append(uses, usesExternal...)
+				}
+
+				return strings.Join(uses, "\n")
+			},
+			nil)))
 
 	allErrs = append(allErrs, cols.Add(ColPackages,
 		rptmaker.NewColInfo(
@@ -127,7 +268,9 @@ func populateCols() *rptmaker.Cols[*prog, *modInfo] {
 				return col.New(&colfmt.Int{W: prog.reportDigits}, headings...)
 			},
 			func(mi *modInfo) any { return len(mi.Packages) },
-			func(a, b *modInfo) int { return len(a.Packages) - len(b.Packages) },
+			func(a, b *modInfo) int {
+				return len(a.Packages) - len(b.Packages)
+			},
 		)))
 
 	allErrs = append(allErrs, cols.Add(ColPkgLines,
@@ -153,13 +296,24 @@ func populateCols() *rptmaker.Cols[*prog, *modInfo] {
 		cols.AddAlias(rptmaker.ColID("loc"), ColPkgLines))
 
 	allErrs = append(allErrs,
-		cols.AddReportableAlias(rptmaker.ColID("all"),
+		cols.AddReportableAlias(rptmaker.ColID("full"),
 			ColLevel,
 			ColName,
 			ColUsesCountExt,
 			ColUsesCountInt,
-			ColUseCount,
+			ColUseCountTotal,
+			ColUseCountDirect,
 			ColUsedBy,
+			ColPackages,
+			ColPkgLines,
+		))
+
+	allErrs = append(allErrs,
+		cols.AddReportableAlias(rptmaker.ColID("direct"),
+			ColLevel,
+			ColName,
+			ColUseCountDirect,
+			ColUsedByDirectly,
 			ColPackages,
 			ColPkgLines,
 		))

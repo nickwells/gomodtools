@@ -17,15 +17,17 @@ import (
 
 // modInfo records information gleaned from the go.mod files
 type modInfo struct {
-	Loc         *location.L
-	Name        string
-	Reqs        []*modInfo
-	ReqCountInt int
-	ReqCountExt int
-	Level       int
-	LinesOfCode int
-	ReqdBy      []*modInfo
-	Packages    map[string]*PkgInfo
+	Loc              *location.L
+	Name             string
+	DirectReqs       []*modInfo
+	IndirectReqs     []*modInfo
+	ReqCountInt      int
+	ReqCountExt      int
+	Level            int
+	LinesOfCode      int
+	ReqdByDirectly   []*modInfo
+	ReqdByIndirectly []*modInfo
+	Packages         map[string]*PkgInfo
 }
 
 // newModInfo creates a new ModInfo with the name populated and the Packages
@@ -53,7 +55,7 @@ func parseGoModFile(modules modMap, contents []byte, loc *location.L) (
 	mi := getModuleInfo(modules, modFile.Module.Mod.Path, loc)
 
 	for _, req := range modFile.Require {
-		mi.addReqs(modules, req.Mod.Path)
+		mi.addReqs(modules, req.Mod.Path, req.Indirect)
 	}
 
 	return mi, nil
@@ -91,15 +93,22 @@ func getModuleInfo(modules modMap, modName string, loc *location.L) *modInfo {
 // module and record that as a requirement of the module and also record that
 // this module requires the other module. If there is a problem it will
 // report it .
-func (mi *modInfo) addReqs(modules modMap, requires string) {
+func (mi *modInfo) addReqs(modules modMap, requires string, indirect bool) {
 	reqdMI, ok := modules[requires]
 	if !ok { // the required module is not yet known, so create a new one
 		reqdMI = newModInfo(requires)
 		modules[requires] = reqdMI
 	}
 
-	reqdMI.ReqdBy = append(reqdMI.ReqdBy, mi)
-	mi.Reqs = append(mi.Reqs, reqdMI)
+	if indirect {
+		reqdMI.ReqdByIndirectly = append(reqdMI.ReqdByIndirectly, mi)
+		mi.IndirectReqs = append(mi.IndirectReqs, reqdMI)
+
+		return
+	}
+
+	reqdMI.ReqdByDirectly = append(reqdMI.ReqdByDirectly, mi)
+	mi.DirectReqs = append(mi.DirectReqs, reqdMI)
 }
 
 // calcLevel sets the level of the module to one greater than the max level
@@ -108,7 +117,7 @@ func (mi *modInfo) addReqs(modules modMap, requires string) {
 func (mi *modInfo) calcLevel() bool {
 	levelChange := false
 
-	for _, rmi := range mi.Reqs {
+	for _, rmi := range mi.DirectReqs {
 		if rmi.Level >= mi.Level &&
 			rmi.Loc != nil { // ignore modules not in set of considered modules
 			mi.Level = rmi.Level + 1
@@ -124,7 +133,7 @@ func (mi *modInfo) calcLevel() bool {
 // of modules being examined (and so the required module has a non-nil Loc
 // field indicating that the module's go.mod file has been seen)
 func (mi *modInfo) setReqCounts() {
-	for _, rmi := range mi.Reqs {
+	for _, rmi := range mi.DirectReqs {
 		if rmi.Loc == nil {
 			mi.ReqCountExt++
 		} else {

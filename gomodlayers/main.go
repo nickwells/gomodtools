@@ -68,7 +68,11 @@ func parseAllGoModFiles(goModFilenames []string) modMap {
 // entry in the modules map. the entries are sorted by the module name.
 func sortReqdByNames(modules modMap) {
 	for _, mi := range modules {
-		slices.SortFunc(mi.ReqdBy,
+		slices.SortFunc(mi.ReqdByDirectly,
+			func(a, b *modInfo) int {
+				return strings.Compare(a.Name, b.Name)
+			})
+		slices.SortFunc(mi.ReqdByIndirectly,
 			func(a, b *modInfo) int {
 				return strings.Compare(a.Name, b.Name)
 			})
