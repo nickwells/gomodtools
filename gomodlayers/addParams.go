@@ -45,6 +45,7 @@ func addParams(prog *prog) param.PSetOptFunc {
 			psetter.Bool{Value: &prog.showHeader, Invert: true},
 			"suppress the printing of the header",
 			param.AltNames("hide-hdr", "no-hdr"),
+			param.SeeAlso(paramHideIntro, paramBrief),
 		)
 
 		ps.Add(paramHeaderRepeat,
