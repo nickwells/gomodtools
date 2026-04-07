@@ -41,7 +41,7 @@ func (modules modMap) reportModuleInfo(prog *prog) {
 		prog.columnsToShow,
 		prog.headerOptFuncs()...)
 	if err != nil {
-		fmt.Println("Couldn't make the report header:", err)
+		fmt.Println("Couldn't make the report:", err)
 		return
 	}
 
