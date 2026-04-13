@@ -3,8 +3,11 @@ package main
 import (
 	"fmt"
 	"io"
+	"maps"
+	"os"
 	"path"
 	"regexp"
+	"slices"
 
 	"github.com/nickwells/col.mod/v6/col"
 	"github.com/nickwells/col.mod/v6/rptmaker"
@@ -27,6 +30,8 @@ type prog struct {
 	partialFilter map[string]bool
 	columnsToShow []rptmaker.ColID
 
+	mInfo []*modInfo
+
 	maxNameLen int
 
 	reportDigits int
@@ -46,7 +51,9 @@ func newProg() *prog {
 		sortBy:        []sortCol{{Value: ColLevel}, {Value: ColName}},
 		columnsToShow: []rptmaker.ColID{ColLevel, ColName, ColUseCountTotal},
 
-		modFilter:    map[string]bool{},
+		modFilter:     map[string]bool{},
+		partialFilter: map[string]bool{},
+
 		reportDigits: dfltDigitsToShow,
 
 		cols: populateCols(),
@@ -167,5 +174,16 @@ func makeReportIntroFunc(prog *prog) col.PreHdrFunc {
 		}
 
 		twc.Println()
+	}
+}
+
+// populateModInfo gathers the module info records from the ModMap filtering
+// them appropriately and recording them in the prog.mInfo member.
+func (prog *prog) populateModInfo(modules modMap) {
+	prog.mInfo = make([]*modInfo, 0, len(modules))
+	for _, mi := range slices.Collect(maps.Values(modules)) {
+		if !prog.skipModInfo(mi) && !prog.matchPartialFilters(mi.Name) {
+			prog.mInfo = append(prog.mInfo, mi)
+		}
 	}
 }

@@ -2,9 +2,7 @@ package main
 
 import (
 	"fmt"
-	"maps"
 	"os"
-	"slices"
 )
 
 // addReqsToFilters will add all the ReqdBy entries for the module into the
@@ -45,14 +43,9 @@ func (modules modMap) reportModuleInfo(prog *prog) {
 		return
 	}
 
-	mInfo := make([]*modInfo, 0, len(modules))
-	for _, mi := range slices.Collect(maps.Values(modules)) {
-		if !prog.skipModInfo(mi) {
-			mInfo = append(mInfo, mi)
-		}
-	}
+	prog.populateModInfo(modules)
 
-	if err = reporter.Print(mInfo, prog.makeSortCols()); err != nil {
+	if err = reporter.Print(prog.mInfo, prog.makeSortCols()); err != nil {
 		fmt.Println("Couldn't print the report:", err)
 
 		return
