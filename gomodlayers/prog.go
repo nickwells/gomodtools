@@ -102,6 +102,7 @@ func (prog *prog) run() {
 
 		return
 	}
+
 	prog.maxNameLen = prog.mm.findMaxNameLen()
 
 	prog.mm.calcLevels()
@@ -166,7 +167,6 @@ func (prog *prog) expandModFilters() {
 
 	prog.applyForwardFilters()
 	prog.applyBackFilters()
-
 }
 
 // makeSortCols converts the prog.sortBy slice into a slice of
@@ -325,7 +325,6 @@ func (prog *prog) makeDotfile() {
 
 	// if prog.dotFileDir is not set os.CreateTemp uses the Temp directory
 	f, err := os.CreateTemp(prog.dotFileDir, dotfilePattern)
-
 	if err != nil {
 		fmt.Println("Couldn't make the Dotfile:", err)
 		return

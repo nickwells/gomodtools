@@ -248,6 +248,7 @@ func addParams(prog *prog) param.PSetOptFunc {
 			if len(prog.moduleFiles) == 0 {
 				return errors.New("you must supply some module files")
 			}
+
 			return nil
 		})
 

@@ -264,6 +264,7 @@ func addColUsesDirectly(p *prog, cols *rptmaker.Cols[*prog, *modInfo]) error {
 					if r.Loc == nil {
 						usesExternal = append(usesExternal,
 							strings.TrimPrefix(r.Name, p.stripPrefix))
+
 						continue
 					}
 
@@ -311,6 +312,7 @@ func addColUses(p *prog, cols *rptmaker.Cols[*prog, *modInfo]) error {
 					if r.Loc == nil {
 						usesExternal = append(usesExternal,
 							strings.TrimPrefix(r.Name, p.stripPrefix))
+
 						continue
 					}
 
@@ -324,6 +326,7 @@ func addColUses(p *prog, cols *rptmaker.Cols[*prog, *modInfo]) error {
 						if r.Loc == nil {
 							usesExternal = append(usesExternal,
 								strings.TrimPrefix(r.Name, p.stripPrefix))
+
 							continue
 						}
 

@@ -49,7 +49,6 @@ func (mi *modInfo) sortCrossRefs() {
 	slices.SortFunc(mi.ReqdByIndirectly, cmpFunc)
 	slices.SortFunc(mi.DirectReqs, cmpFunc)
 	slices.SortFunc(mi.IndirectReqs, cmpFunc)
-
 }
 
 // parseGoModFile parses the supplied file and uses the information found to
