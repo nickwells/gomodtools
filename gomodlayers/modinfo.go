@@ -6,6 +6,7 @@ import (
 	"go/token"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/nickwells/check.mod/v2/check"
@@ -39,8 +40,17 @@ func newModInfo(name string) *modInfo {
 	}
 }
 
-// modMap associates names with the information from go.mod files
-type modMap map[string]*modInfo
+// sortCrossRefs sorts the cross reference entries by name
+func (mi *modInfo) sortCrossRefs() {
+	cmpFunc := func(a, b *modInfo) int {
+		return strings.Compare(a.Name, b.Name)
+	}
+	slices.SortFunc(mi.ReqdByDirectly, cmpFunc)
+	slices.SortFunc(mi.ReqdByIndirectly, cmpFunc)
+	slices.SortFunc(mi.DirectReqs, cmpFunc)
+	slices.SortFunc(mi.IndirectReqs, cmpFunc)
+
+}
 
 // parseGoModFile parses the supplied file and uses the information found to
 // populate the map of moduleInfo

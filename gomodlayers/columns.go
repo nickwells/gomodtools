@@ -65,7 +65,7 @@ func addColLevel(cols *rptmaker.Cols[*prog, *modInfo]) error {
 }
 
 // addColName adds the name column to the supplied cols parameter.
-func addColName(cols *rptmaker.Cols[*prog, *modInfo]) error {
+func addColName(p *prog, cols *rptmaker.Cols[*prog, *modInfo]) error {
 	return cols.Add(ColName,
 		rptmaker.NewColInfo("this is the module name. It includes the module"+
 			" version number (if any).",
@@ -75,7 +75,7 @@ func addColName(cols *rptmaker.Cols[*prog, *modInfo]) error {
 				return col.New(&colfmt.String{W: prog.maxNameLen}, headings...)
 			},
 			// colVal
-			func(mi *modInfo) any { return mi.Name },
+			func(mi *modInfo) any { return strings.TrimPrefix(mi.Name, p.stripPrefix) },
 			// cmpVals
 			func(a, b *modInfo) int {
 				return strings.Compare(a.Name, b.Name)
@@ -129,7 +129,7 @@ func addColUseCountTotal(cols *rptmaker.Cols[*prog, *modInfo]) error {
 }
 
 // addColUsedBy adds the usedBy column to the supplied cols parameter.
-func addColUsedBy(cols *rptmaker.Cols[*prog, *modInfo]) error {
+func addColUsedBy(p *prog, cols *rptmaker.Cols[*prog, *modInfo]) error {
 	return cols.Add(ColUsedBy,
 		rptmaker.NewColInfo(
 			"this lists the names of the modules using this"+
@@ -151,8 +151,9 @@ func addColUsedBy(cols *rptmaker.Cols[*prog, *modInfo]) error {
 					len(mi.ReqdByDirectly)+
 						len(mi.ReqdByIndirectly)+
 						separatorCount)
-				for _, p := range mi.ReqdByDirectly {
-					reqdBy = append(reqdBy, p.Name)
+				for _, rb := range mi.ReqdByDirectly {
+					reqdBy = append(reqdBy,
+						strings.TrimPrefix(rb.Name, p.stripPrefix))
 				}
 
 				if len(mi.ReqdByIndirectly) > 0 {
@@ -161,8 +162,9 @@ func addColUsedBy(cols *rptmaker.Cols[*prog, *modInfo]) error {
 					}
 
 					reqdBy = append(reqdBy, indirectSeparator)
-					for _, p := range mi.ReqdByIndirectly {
-						reqdBy = append(reqdBy, p.Name)
+					for _, rb := range mi.ReqdByIndirectly {
+						reqdBy = append(reqdBy,
+							strings.TrimPrefix(rb.Name, p.stripPrefix))
 					}
 				}
 
@@ -173,7 +175,7 @@ func addColUsedBy(cols *rptmaker.Cols[*prog, *modInfo]) error {
 
 // addColUsedByDirectly adds the usedByDirectly column to the supplied cols
 // parameter.
-func addColUsedByDirectly(cols *rptmaker.Cols[*prog, *modInfo]) error {
+func addColUsedByDirectly(p *prog, cols *rptmaker.Cols[*prog, *modInfo]) error {
 	return cols.Add(ColUsedByDirectly,
 		rptmaker.NewColInfo(
 			"this lists the names of the modules using this"+
@@ -190,8 +192,9 @@ func addColUsedByDirectly(cols *rptmaker.Cols[*prog, *modInfo]) error {
 			// colVal
 			func(mi *modInfo) any {
 				reqdBy := make([]string, 0, len(mi.ReqdByDirectly))
-				for _, p := range mi.ReqdByDirectly {
-					reqdBy = append(reqdBy, p.Name)
+				for _, rb := range mi.ReqdByDirectly {
+					reqdBy = append(reqdBy,
+						strings.TrimPrefix(rb.Name, p.stripPrefix))
 				}
 
 				return strings.Join(reqdBy, "\n")
@@ -239,7 +242,7 @@ func addColUsesCountExt(cols *rptmaker.Cols[*prog, *modInfo]) error {
 
 // addColUsesDirectly adds the usesDirectly column to the supplied cols
 // parameter.
-func addColUsesDirectly(cols *rptmaker.Cols[*prog, *modInfo]) error {
+func addColUsesDirectly(p *prog, cols *rptmaker.Cols[*prog, *modInfo]) error {
 	return cols.Add(ColUsesDirectly,
 		rptmaker.NewColInfo(
 			"this lists the names of the modules that"+
@@ -257,13 +260,15 @@ func addColUsesDirectly(cols *rptmaker.Cols[*prog, *modInfo]) error {
 						separatorCount)
 				usesExternal := []string{}
 
-				for _, p := range mi.DirectReqs {
-					if p.Loc == nil {
-						usesExternal = append(usesExternal, p.Name)
+				for _, r := range mi.DirectReqs {
+					if r.Loc == nil {
+						usesExternal = append(usesExternal,
+							strings.TrimPrefix(r.Name, p.stripPrefix))
 						continue
 					}
 
-					uses = append(uses, p.Name)
+					uses = append(uses,
+						strings.TrimPrefix(r.Name, p.stripPrefix))
 				}
 
 				if len(usesExternal) > 0 {
@@ -281,7 +286,7 @@ func addColUsesDirectly(cols *rptmaker.Cols[*prog, *modInfo]) error {
 }
 
 // addColUses adds the uses column to the supplied cols parameter.
-func addColUses(cols *rptmaker.Cols[*prog, *modInfo]) error {
+func addColUses(p *prog, cols *rptmaker.Cols[*prog, *modInfo]) error {
 	return cols.Add(ColUses,
 		rptmaker.NewColInfo(
 			"this lists the names of the modules that"+
@@ -302,24 +307,28 @@ func addColUses(cols *rptmaker.Cols[*prog, *modInfo]) error {
 
 				usesExternal := []string{}
 
-				for _, p := range mi.DirectReqs {
-					if p.Loc == nil {
-						usesExternal = append(usesExternal, p.Name)
+				for _, r := range mi.DirectReqs {
+					if r.Loc == nil {
+						usesExternal = append(usesExternal,
+							strings.TrimPrefix(r.Name, p.stripPrefix))
 						continue
 					}
 
-					uses = append(uses, p.Name)
+					uses = append(uses,
+						strings.TrimPrefix(r.Name, p.stripPrefix))
 				}
 
 				if len(mi.IndirectReqs) > 0 {
 					usesIndirect := make([]string, 0, len(mi.IndirectReqs))
-					for _, p := range mi.IndirectReqs {
-						if p.Loc == nil {
-							usesExternal = append(usesExternal, p.Name)
+					for _, r := range mi.IndirectReqs {
+						if r.Loc == nil {
+							usesExternal = append(usesExternal,
+								strings.TrimPrefix(r.Name, p.stripPrefix))
 							continue
 						}
 
-						usesIndirect = append(usesIndirect, p.Name)
+						usesIndirect = append(usesIndirect,
+							strings.TrimPrefix(r.Name, p.stripPrefix))
 					}
 
 					if len(usesIndirect) > 0 {
@@ -389,20 +398,20 @@ func addColPkgLines(cols *rptmaker.Cols[*prog, *modInfo]) error {
 }
 
 // populateCols populates and returns the report columns
-func populateCols() *rptmaker.Cols[*prog, *modInfo] {
+func (p *prog) populateCols() *rptmaker.Cols[*prog, *modInfo] {
 	allErrs := []error{}
 	cols := rptmaker.NewCols[*prog, *modInfo]()
 
 	allErrs = append(allErrs, addColLevel(cols))
-	allErrs = append(allErrs, addColName(cols))
+	allErrs = append(allErrs, addColName(p, cols))
 	allErrs = append(allErrs, addColUseCountDirect(cols))
 	allErrs = append(allErrs, addColUseCountTotal(cols))
-	allErrs = append(allErrs, addColUsedBy(cols))
-	allErrs = append(allErrs, addColUsedByDirectly(cols))
+	allErrs = append(allErrs, addColUsedBy(p, cols))
+	allErrs = append(allErrs, addColUsedByDirectly(p, cols))
 	allErrs = append(allErrs, addColUsesCountInt(cols))
 	allErrs = append(allErrs, addColUsesCountExt(cols))
-	allErrs = append(allErrs, addColUsesDirectly(cols))
-	allErrs = append(allErrs, addColUses(cols))
+	allErrs = append(allErrs, addColUsesDirectly(p, cols))
+	allErrs = append(allErrs, addColUses(p, cols))
 	allErrs = append(allErrs, addColPackages(cols))
 	allErrs = append(allErrs, addColPkgLines(cols))
 

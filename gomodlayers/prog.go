@@ -3,11 +3,10 @@ package main
 import (
 	"fmt"
 	"io"
-	"maps"
 	"os"
 	"path"
 	"regexp"
-	"slices"
+	"strings"
 
 	"github.com/nickwells/col.mod/v6/col"
 	"github.com/nickwells/col.mod/v6/rptmaker"
@@ -18,8 +17,17 @@ import (
 // sortCol is a type alias for the TaggedEnum
 type sortCol = psetter.TaggedValue[rptmaker.ColID, rptmaker.SortWay]
 
-// prog holds program parameters and status
+type OutputStyle string
+
+const (
+	styleReport  = "report"
+	styleDotFile = "dotfile"
+)
+
+// prog holds program parameters, intermediate results and status
 type prog struct {
+	exitStatus int
+
 	hideDupLevels bool
 	showIntro     bool
 	showHeader    bool
@@ -28,23 +36,34 @@ type prog struct {
 
 	modFilter     map[string]bool
 	partialFilter map[string]bool
+	backFilter    map[string]bool
+	hideModules   map[string]bool
+
 	columnsToShow []rptmaker.ColID
 
-	mInfo []*modInfo
+	moduleFiles []string
+	mm          modMap
+	mInfo       []*modInfo
 
 	maxNameLen int
 
 	reportDigits int
 	headerRepeat int
 
+	output OutputStyle
+
 	cols *rptmaker.Cols[*prog, *modInfo]
+
+	dotFileDir string
+
+	stripPrefix string
 }
 
 // newProg returns a new Prog instance with the default values set
 func newProg() *prog {
 	const dfltDigitsToShow = 5
 
-	return &prog{
+	prog := &prog{
 		showIntro:  true,
 		showHeader: true,
 
@@ -53,11 +72,101 @@ func newProg() *prog {
 
 		modFilter:     map[string]bool{},
 		partialFilter: map[string]bool{},
+		backFilter:    map[string]bool{},
+
+		mm: modMap{},
 
 		reportDigits: dfltDigitsToShow,
 
-		cols: populateCols(),
+		output: styleReport,
 	}
+
+	prog.cols = prog.populateCols()
+
+	return prog
+}
+
+// setExitStatus sets the exit status to the new value. It will not do this
+// if the exit status has already been set to a non-zero value.
+func (prog *prog) setExitStatus(es int) {
+	if prog.exitStatus == 0 {
+		prog.exitStatus = es
+	}
+}
+
+// run generates the module report
+func (prog *prog) run() {
+	if errMap := prog.mm.populate(prog.moduleFiles); errMap.HasErrors() {
+		errMap.Report(os.Stderr, "")
+		prog.setExitStatus(1)
+
+		return
+	}
+	prog.maxNameLen = prog.mm.findMaxNameLen()
+
+	prog.mm.calcLevels()
+	prog.mm.calcReqCount()
+
+	prog.expandModFilters()
+	prog.populateModInfo()
+
+	switch prog.output {
+	case styleReport:
+		prog.reportModuleInfo()
+	case styleDotFile:
+		prog.makeDotfile()
+	}
+}
+
+// applyBackFilters takes all the back filters and adds their
+// requirements to the set of filters
+func (prog *prog) applyBackFilters() {
+	for _, mi := range prog.mm {
+		if prog.backFilter[mi.Name] {
+			prog.modFilter[mi.Name] = true
+
+			for _, dr := range mi.DirectReqs {
+				prog.modFilter[dr.Name] = true
+			}
+
+			for _, ir := range mi.IndirectReqs {
+				prog.modFilter[ir.Name] = true
+			}
+		}
+	}
+}
+
+// applyForwardFilters takes all the filters and adds those modules that
+// require them (directly) to the set of filters
+func (prog *prog) applyForwardFilters() {
+	for _, mi := range prog.mm {
+		if prog.modFilter[mi.Name] {
+			for _, rb := range mi.ReqdByDirectly {
+				prog.modFilter[rb.Name] = true
+			}
+		} else {
+			if prog.matchPartialFilters(mi.Name) {
+				prog.modFilter[mi.Name] = true
+				for _, rb := range mi.ReqdByDirectly {
+					prog.modFilter[rb.Name] = true
+				}
+			}
+		}
+	}
+}
+
+// expandModFilters takes the initial set of modFilters and adds all the
+// other modules that it is required by.
+func (prog *prog) expandModFilters() {
+	if len(prog.modFilter) == 0 &&
+		len(prog.partialFilter) == 0 &&
+		len(prog.backFilter) == 0 {
+		return
+	}
+
+	prog.applyForwardFilters()
+	prog.applyBackFilters()
+
 }
 
 // makeSortCols converts the prog.sortBy slice into a slice of
@@ -177,13 +286,91 @@ func makeReportIntroFunc(prog *prog) col.PreHdrFunc {
 	}
 }
 
-// populateModInfo gathers the module info records from the ModMap filtering
-// them appropriately and recording them in the prog.mInfo member.
-func (prog *prog) populateModInfo(modules modMap) {
-	prog.mInfo = make([]*modInfo, 0, len(modules))
-	for _, mi := range slices.Collect(maps.Values(modules)) {
-		if !prog.skipModInfo(mi) && !prog.matchPartialFilters(mi.Name) {
+// skipModInfo returns true if the module info record should be skipped. It
+// will be skippped if:
+//
+// The location has not been filled in (its an external module).
+//
+// There is a module filter and the name does not match an entry in the
+// filters map.
+//
+// The module name is in the hideModules map
+func (prog *prog) skipModInfo(mi *modInfo) bool {
+	if mi.Loc == nil {
+		return true
+	}
+
+	if len(prog.modFilter) > 0 && !prog.modFilter[mi.Name] {
+		return true
+	}
+
+	return prog.hideModules[mi.Name]
+}
+
+// populateModInfo gathers the module info records from the modules map
+// filtering them appropriately and recording them in the prog.mInfo member.
+func (prog *prog) populateModInfo() {
+	prog.mInfo = make([]*modInfo, 0, len(prog.mm))
+	for _, mi := range prog.mm {
+		if !prog.skipModInfo(mi) {
 			prog.mInfo = append(prog.mInfo, mi)
 		}
+	}
+}
+
+// makeDotfile creates a Dotfile, a representation of the module information
+// in the Graphviz DOT language which can be transformed into a picture.
+func (prog *prog) makeDotfile() {
+	const dotfilePattern = "gomodlayers*.gv"
+
+	// if prog.dotFileDir is not set os.CreateTemp uses the Temp directory
+	f, err := os.CreateTemp(prog.dotFileDir, dotfilePattern)
+
+	if err != nil {
+		fmt.Println("Couldn't make the Dotfile:", err)
+		return
+	}
+
+	fmt.Fprintln(f, "digraph modules {")
+
+	for _, mi := range prog.mInfo {
+		name := strings.TrimPrefix(mi.Name, prog.stripPrefix)
+		for _, rbMi := range mi.ReqdByDirectly {
+			if prog.skipModInfo(rbMi) {
+				continue
+			}
+
+			rbName := strings.TrimPrefix(rbMi.Name, prog.stripPrefix)
+			fmt.Fprintf(f, "\t%q -> %q\n", rbName, name)
+		}
+	}
+
+	fmt.Fprintln(f, "}")
+
+	if err = f.Close(); err != nil {
+		fmt.Println("error closing the dotfile:", err)
+	}
+
+	fmt.Println("see: ", f.Name())
+}
+
+// reportModuleInfo prints the module information
+func (prog *prog) reportModuleInfo() {
+	// recreate the cols with the prog value post param parsing
+	prog.cols = prog.populateCols()
+
+	reporter, err := prog.cols.MakeReport(prog,
+		os.Stdout,
+		prog.columnsToShow,
+		prog.headerOptFuncs()...)
+	if err != nil {
+		fmt.Println("Couldn't make the report:", err)
+		return
+	}
+
+	if err = reporter.Print(prog.mInfo, prog.makeSortCols()); err != nil {
+		fmt.Println("Couldn't print the report:", err)
+
+		return
 	}
 }

@@ -1,10 +1,12 @@
 package main
 
 import (
+	"errors"
 	"slices"
 
 	"github.com/nickwells/check.mod/v2/check"
 	"github.com/nickwells/col.mod/v6/rptmaker"
+	"github.com/nickwells/filecheck.mod/filecheck"
 	"github.com/nickwells/location.mod/location"
 	"github.com/nickwells/param.mod/v7/paction"
 	"github.com/nickwells/param.mod/v7/param"
@@ -23,6 +25,11 @@ const (
 	paramNamesOnly     = "names-only"
 	paramFilter        = "filter"
 	paramPartialFilter = "partial-filter"
+	paramBackFilter    = "back-filter"
+	paramMakeDotFile   = "make-dot-file"
+	paramDotFileDir    = "dot-file-directory"
+	paramStripPrefix   = "strip-module-name-prefix"
+	paramHideModule    = "hide-module"
 )
 
 type sortWay = rptmaker.SortWay
@@ -158,7 +165,7 @@ func addParams(prog *prog) param.PSetOptFunc {
 				" and module B uses A and C uses B but not A (directly)"+
 				" then modules A, B and C will be shown.",
 			param.AltNames("filt", "f"),
-			param.SeeAlso(paramPartialFilter),
+			param.SeeAlso(paramPartialFilter, paramBackFilter),
 		)
 
 		ps.Add(paramPartialFilter,
@@ -178,8 +185,71 @@ func addParams(prog *prog) param.PSetOptFunc {
 				" if they have differing prefixes before the start of"+
 				" the partial filter.",
 			param.AltNames("pf"),
-			param.SeeAlso(paramFilter),
+			param.SeeAlso(paramFilter, paramBackFilter),
 		)
+
+		ps.Add(paramBackFilter,
+			psetter.Map[string]{Value: &prog.backFilter},
+			"the module names to filter by."+
+				" The report will only show these modules"+
+				" and any modules that they use."+
+				" The notion of 'used' is recursive so that"+
+				" if the filter is on module A"+
+				" and module A uses B and B uses C"+
+				" then modules A, B and C will be shown.",
+			param.SeeAlso(paramPartialFilter, paramFilter),
+		)
+
+		ps.Add(paramHideModule,
+			psetter.Map[string]{Value: &prog.hideModules},
+			"the module names to hide."+
+				" The report will not show these modules.",
+			param.AltNames("hide-modules", "hide"),
+		)
+
+		ps.Add(paramMakeDotFile,
+			psetter.Nil{},
+			"generate a file in the Graphviz DOT language"+
+				" showing the relationships between modules."+
+				" The name of the generated file will be shown.",
+			param.AltNames("dot-file", "dotfile"),
+			param.SeeAlso(paramDotFileDir),
+			param.PostAction(paction.SetVal(&prog.output, styleDotFile)),
+		)
+
+		ps.Add(paramDotFileDir,
+			psetter.Pathname{
+				Value:       &prog.dotFileDir,
+				Expectation: filecheck.DirExists(),
+			},
+			"give the name of the directory in which"+
+				" the Graphviz Dot file will be generated."+
+				" If this is not given it will be created in"+
+				" a temporary directory."+
+				" Setting this value will automatically produce the dotfile.",
+			param.AltNames("dot-file-dir", "dotfile-dir", "dotfile-directory"),
+			param.SeeAlso(paramMakeDotFile),
+			param.PostAction(paction.SetVal(&prog.output, styleDotFile)),
+		)
+
+		ps.Add(paramStripPrefix,
+			psetter.String[string]{
+				Value: &prog.stripPrefix,
+			},
+			"a module name prefix to be stripped from the names."+
+				` If this is set to "A/B/"`+
+				` then any module called "A/B/C"`+
+				` will be shown as just "C"`,
+			param.AltNames("strip-prefix"),
+		)
+
+		ps.AddFinalCheck(func() error {
+			prog.moduleFiles = ps.TrailingParams()
+			if len(prog.moduleFiles) == 0 {
+				return errors.New("you must supply some module files")
+			}
+			return nil
+		})
 
 		return nil
 	}
