@@ -18,8 +18,8 @@ github.com/nickwells/mathutil.mod/v2 v2.5.11 h1:NZd6DcQlkorpUVV6W6dt3RJsQDSldT0D
 github.com/nickwells/mathutil.mod/v2 v2.5.11/go.mod h1:3sZumgf0qtVdA3yRHqx5pCotccjTnmQU6SX1MGOgnYU=
 github.com/nickwells/pager.mod v1.1.0 h1:aQz49pzbl4fhTm1CsbZ38tGJCI8AVn5H3jfIB1/B5d0=
 github.com/nickwells/pager.mod v1.1.0/go.mod h1:OGWcVtaTPzCTghzTGqaFMhXxY6eeEx7B5bD3QZY/TwU=
-github.com/nickwells/param.mod/v7 v7.2.3 h1:yo64CnvVIx3W2JOQAfzKXgg5A5DW0Ho8q+TGeG47CYE=
-github.com/nickwells/param.mod/v7 v7.2.3/go.mod h1:E66GIhdvT8Arqp9xcqyyhGTTr5V1wsG12kMzJ2Vhhm8=
+github.com/nickwells/param.mod/v7 v7.2.4 h1:3KQXgmavGSBHlTaIKsJj4JxGVTaN4ccyZWP3sfAgQ4s=
+github.com/nickwells/param.mod/v7 v7.2.4/go.mod h1:E66GIhdvT8Arqp9xcqyyhGTTr5V1wsG12kMzJ2Vhhm8=
 github.com/nickwells/strdist.mod/v2 v2.1.2 h1:YCYd+xhYA6uaFfw6gNKPneEgAioJkz0UD9zOFQFtSKk=
 github.com/nickwells/strdist.mod/v2 v2.1.2/go.mod h1:f1xw0L6xS/aFem3akuFbsBTGmn90IiFlUZO8RXLuYbQ=
 github.com/nickwells/tempus.mod v1.2.11 h1:v+2zrjwwCbJcNpQCpNkNCnUg7yAJDkCxyAXFp9a47gU=
@@ -28,8 +28,8 @@ github.com/nickwells/testhelper.mod/v2 v2.6.1 h1:bz9i+YPyR+L1s0iM0/fiBmJ8mUAl6BP
 github.com/nickwells/testhelper.mod/v2 v2.6.1/go.mod h1:MKIJiDiPNgn4r7/46XG5aclWV0eu0mlSqzsPLadi2V8=
 github.com/nickwells/twrap.mod v1.5.14 h1:nnxmHEbDP8Zgk3PbvRftDrQegvpuuoo/fmWemyD4R4I=
 github.com/nickwells/twrap.mod v1.5.14/go.mod h1:76RJY0eoScPwNp28C28BTFqF9ZV7kdoJNx28+fNt+aI=
-github.com/nickwells/versionparams.mod v1.2.27 h1:x/xoMINajnCiCDf9hcJZBlC6ucmHZHucAXs+n5YWmMw=
-github.com/nickwells/versionparams.mod v1.2.27/go.mod h1:u4innEEcXFhig/I03GTWh3TnEyTn017NeXA1X94NkIg=
+github.com/nickwells/versionparams.mod v1.2.28 h1:9X6HveyxoqkW+7TU0hQ7ALAHz1gDEfwugBR4Ve122lQ=
+github.com/nickwells/versionparams.mod v1.2.28/go.mod h1:tKPKcIrlHTp5Rno18IeMJIDJkUvyscpRND1+iQTfDBQ=
 github.com/nickwells/xdg.mod v1.0.12 h1:eJSlyYXHNLBnj/Uyh52xyRTR+7PxCq9PWu4W9eIP/9o=
 github.com/nickwells/xdg.mod v1.0.12/go.mod h1:QNimXjvv0GmffSeFPbrgBJ15N+uCmRAFOTRyBZiDphU=
 golang.org/x/exp v0.0.0-20260508232706-74f9aab9d74a h1:+3jdDGGB8NGb1Zktc737jlt3/A5f6UlwSzmvqUuufxw=
