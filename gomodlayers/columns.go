@@ -49,10 +49,8 @@ func addColLevel(cols *rptmaker.Cols[*prog, *modInfo]) error {
 			func(prog *prog, headings []string) *col.Col {
 				return col.New(
 					&colfmt.Int{
-						W: prog.reportDigits,
-						DupHdlr: colfmt.DupHdlr{
-							SkipDups: prog.hideDupLevels,
-						},
+						W:        prog.reportDigits,
+						SkipDups: prog.hideDupLevels,
 					},
 					headings...)
 			},
