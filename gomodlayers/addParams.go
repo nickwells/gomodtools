@@ -102,8 +102,10 @@ func addParams(prog *prog) param.PSetOptFunc {
 					rptmaker.SortDirectionAliases(),
 				),
 				TagListSeparator: psetter.StrListSeparator{Sep: "|"},
-				TagChecks: []check.ValCk[[]sortWay]{
-					check.SliceLength[[]sortWay](check.ValBetween(0, 1)),
+				TagChecks: psetter.ValueChecker[[]sortWay]{
+					Checks: []check.ValCk[[]sortWay]{
+						check.SliceLength[[]sortWay](check.ValBetween(0, 1)),
+					},
 				},
 			},
 			"what order should the modules be sorted when reporting",
